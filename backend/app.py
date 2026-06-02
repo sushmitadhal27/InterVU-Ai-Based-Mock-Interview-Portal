@@ -21,7 +21,7 @@ CORS(app, origins=['*'])
 # ===============================
 # Put your key in .env as:
 # GROQ_API_KEY=your_key_here
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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").strip()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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").strip()
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
 
