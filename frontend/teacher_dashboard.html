@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VU AI Interview | 3D Faculty Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:radial-gradient(circle at 10% 20%,#0a2a1a,#051a0a);min-height:100vh;overflow-x:hidden;perspective:1000px}
+    .bg-3d{position:fixed;width:100%;height:100%;z-index:-1;overflow:hidden}
+    .cube{position:absolute;width:60px;height:60px;background:rgba(26,71,42,.05);border:1px solid rgba(255,204,0,.1);transform-style:preserve-3d;animation:rotate3d 20s linear infinite}
+    @keyframes rotate3d{0%{transform:rotateX(0) rotateY(0) translateZ(0)}100%{transform:rotateX(360deg) rotateY(360deg) translateZ(100px)}}
+
+    .navbar{background:rgba(10,30,20,.9);backdrop-filter:blur(20px);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,204,0,.3);box-shadow:0 10px 40px rgba(0,0,0,.3);transform:translateZ(20px)}
+    .logo-area{display:flex;align-items:center;gap:12px;transform-style:preserve-3d;transition:transform .3s}
+    .logo-area:hover{transform:translateZ(10px) rotateX(5deg)}
+    .logo-icon{width:52px;height:52px;background:linear-gradient(135deg,#ffcc00,#ff8800);border-radius:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(255,204,0,.4);animation:float3d 3s ease-in-out infinite}
+    @keyframes float3d{0%,100%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-8px) rotateY(10deg)}}
+    .logo-icon i{font-size:1.8rem;color:#1a472a}
+    .logo-text h1{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#fff,#ffdd99);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .logo-text p{font-size:.7rem;color:#ffdd99}
+
+    .user-info{display:flex;align-items:center;gap:20px;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);padding:6px 20px 6px 12px;border-radius:60px;border:1px solid rgba(255,204,0,.3);transition:all .3s;transform-style:preserve-3d}
+    .user-info:hover{transform:translateZ(15px);background:rgba(255,255,255,.12);box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .user-avatar{width:50px;height:50px;background:linear-gradient(135deg,#ffcc00,#ffaa00);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;color:#1a472a;box-shadow:0 4px 15px rgba(255,204,0,.3)}
+    .user-details h4{color:#fff;font-size:.95rem;font-weight:600}
+    .user-details p{color:#ffdd99;font-size:.7rem}
+    .logout-btn{background:rgba(255,68,68,.2);border:1px solid rgba(255,100,100,.4);padding:8px 18px;border-radius:40px;color:#fff;cursor:pointer;transition:all .3s;font-weight:500;display:flex;align-items:center;gap:8px}
+    .logout-btn:hover{background:#ff4444;transform:translateY(-3px) scale(1.05);box-shadow:0 8px 20px rgba(255,68,68,.4)}
+
+    .dashboard-container{max-width:1400px;margin:0 auto;padding:30px}
+    .tabs{display:flex;gap:12px;margin-bottom:30px;background:rgba(0,0,0,.4);backdrop-filter:blur(20px);padding:10px;border-radius:60px;box-shadow:0 10px 30px rgba(0,0,0,.2);border:1px solid rgba(255,204,0,.2);transform-style:preserve-3d;flex-wrap:wrap}
+    .tab-btn{padding:14px 26px;border:none;background:transparent;cursor:pointer;font-size:.95rem;font-weight:600;color:#c0d0e8;border-radius:50px;transition:all .3s;transform-style:preserve-3d}
+    .tab-btn:hover{background:rgba(255,204,0,.15);color:#ffcc00;transform:translateZ(10px)}
+    .tab-btn.active{background:linear-gradient(135deg,#1a472a,#0d2e1a);color:#fff;box-shadow:0 8px 20px rgba(26,71,42,.4);transform:translateZ(15px)}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:32px}
+    .stat-card{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));backdrop-filter:blur(12px);border-radius:28px;padding:28px;display:flex;align-items:center;gap:20px;box-shadow:0 15px 35px rgba(0,0,0,.2);transition:all .4s cubic-bezier(.175,.885,.32,1.275);border:1px solid rgba(255,204,0,.15);cursor:pointer;transform-style:preserve-3d}
+    .stat-card:hover{transform:translateY(-10px) rotateX(5deg) scale(1.02);box-shadow:0 25px 50px rgba(0,0,0,.3);border-color:rgba(255,204,0,.4)}
+    .stat-icon{width:75px;height:75px;background:linear-gradient(135deg,rgba(26,71,42,.3),rgba(13,46,26,.5));border-radius:24px;display:flex;align-items:center;justify-content:center;transition:all .3s;border:1px solid rgba(255,204,0,.2)}
+    .stat-card:hover .stat-icon{transform:rotateY(180deg)}
+    .stat-icon i{font-size:2.2rem;color:#ffcc00}
+    .stat-info h3{font-size:2.2rem;font-weight:800;color:#fff}
+    .stat-info p{color:#c0d0e8;font-size:.85rem;font-weight:500;margin-top:4px}
+
+    .search-bar{background:rgba(0,0,0,.4);backdrop-filter:blur(12px);padding:20px;border-radius:28px;margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;box-shadow:0 8px 25px rgba(0,0,0,.15);border:1px solid rgba(255,204,0,.2)}
+    .search-input{flex:1;padding:14px 22px;border:none;background:rgba(255,255,255,.1);border-radius:50px;font-size:.9rem;color:#fff;transition:all .3s;min-width:220px}
+    .search-input:focus{outline:none;background:rgba(255,255,255,.15);box-shadow:0 0 0 3px rgba(255,204,0,.2)}
+    .search-input::placeholder{color:#8ba0bc}
+
+    .student-table-container{background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border-radius:32px;padding:28px;box-shadow:0 15px 35px rgba(0,0,0,.2);overflow-x:auto;border:1px solid rgba(255,204,0,.15)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:16px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}
+    th{color:#ffcc00;font-weight:700;font-size:.85rem;background:rgba(0,0,0,.3)}
+    td{color:#e0e8f0;font-size:.85rem}
+    tr{transition:all .3s}
+    tr:hover{background:rgba(255,204,0,.1);transform:translateX(5px)}
+
+    .performance-badge{padding:5px 12px;border-radius:30px;font-weight:600;font-size:.75rem;display:inline-block}
+    .performance-high{background:linear-gradient(135deg,#28a745,#20c997);color:#fff}
+    .performance-medium{background:linear-gradient(135deg,#ffc107,#fd7e14);color:#1a472a}
+    .performance-low{background:linear-gradient(135deg,#dc3545,#c82333);color:#fff}
+
+    .view-btn,.delete-btn,.schedule-btn,.edit-btn{padding:7px 12px;border:none;border-radius:12px;cursor:pointer;font-size:.75rem;font-weight:600;margin:3px;transition:all .3s}
+    .view-btn{background:linear-gradient(135deg,#1a472a,#0d2e1a);color:#fff;border:1px solid rgba(255,204,0,.3)}
+    .view-btn:hover,.edit-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(26,71,42,.5)}
+    .delete-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:#fff}
+    .delete-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(220,53,69,.5)}
+    .schedule-btn{background:linear-gradient(135deg,#ffcc00,#ffaa00);color:#1a472a;font-weight:700}
+    .schedule-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(255,204,0,.5)}
+    .edit-btn{background:linear-gradient(135deg,#17a2b8,#138496);color:#fff}
+
+    /* Modal Styles - Updated Dropdown Styles */
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);backdrop-filter:blur(15px);z-index:1000;overflow-y:auto}
+    .modal-content{background:linear-gradient(145deg,#0a2a1a,#051a0a);max-width:800px;margin:40px auto;border-radius:40px;padding:36px;position:relative;animation:modalSlideUp .5s ease;border:1px solid rgba(255,204,0,.3);box-shadow:0 30px 60px rgba(0,0,0,.5)}
+    @keyframes modalSlideUp{from{opacity:0;transform:translateY(100px) rotateX(-15deg)}to{opacity:1;transform:translateY(0) rotateX(0)}}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;padding-bottom:12px;border-bottom:2px solid rgba(255,204,0,.3)}
+    .modal-header h2{color:#ffcc00;font-size:1.4rem;font-weight:700}
+    .close-modal{font-size:36px;cursor:pointer;color:#ffcc00;transition:all .3s}
+    .close-modal:hover{color:#ff4444;transform:rotate(90deg) scale(1.2)}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+    /* Updated Form Styles - Black Background, White Text */
+    .form-group label{font-weight:600;margin-bottom:8px;color:#ffdd99;font-size:.85rem;display:block}
+    .form-group input,.form-group select,.form-group textarea{
+      width:100%;
+      padding:12px 16px;
+      background:#1a1a2e;
+      border:1px solid rgba(255,204,0,.3);
+      border-radius:16px;
+      font-size:.9rem;
+      color:#ffffff;
+      transition:all .3s;
+      font-family:'Inter',sans-serif;
+    }
+    .form-group select option{
+      background:#1a1a2e;
+      color:#ffffff;
+    }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+      outline:none;
+      border-color:#ffcc00;
+      box-shadow:0 0 0 3px rgba(255,204,0,.2);
+    }
+    .form-group input::placeholder,.form-group select::placeholder,.form-group textarea::placeholder{color:#6c86a3}
+
+    /* Invalid input styling */
+    .form-group input:invalid:not(:placeholder-shown){
+      border-color:#ff4444;
+    }
+    .form-group input:valid:not(:placeholder-shown){
+      border-color:#2ed573;
+    }
+
+    .btn-3d{background:linear-gradient(135deg,#1a472a,#0d2e1a);color:#fff;border:none;padding:14px 28px;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;width:100%}
+    .btn-3d:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(26,71,42,.5)}
+
+    .message{position:fixed;top:100px;right:30px;padding:15px 25px;border-radius:20px;color:#fff;font-weight:600;z-index:1100;display:none;animation:slideInRight .3s ease;max-width:420px}
+    .message.success{background:linear-gradient(135deg,#28a745,#20c997)}
+    .message.error{background:linear-gradient(135deg,#dc3545,#c82333)}
+
+    .category-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:600}
+    .category-company{background:linear-gradient(135deg,#1a472a,#2d6a4f);color:#fff}
+    .category-departmental{background:linear-gradient(135deg,#ffc107,#fd7e14);color:#1a472a}
+    .category-placement{background:linear-gradient(135deg,#17a2b8,#138496);color:#fff}
+    .category-other{background:linear-gradient(135deg,#6c757d,#495057);color:#fff}
+
+    .filter-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+    .filter-chip{padding:8px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,204,0,.3);border-radius:30px;cursor:pointer;color:#ffdd99;font-size:0.85rem;transition:all .3s}
+    .filter-chip:hover,.filter-chip.active{background:#ffcc00;color:#1a472a;border-color:#ffcc00}
+
+    .interview-card{background:rgba(255,255,255,.05);border-radius:20px;padding:18px;margin-bottom:16px;border:1px solid rgba(255,204,0,.15);transition:all .3s}
+    .interview-card:hover{transform:translateX(5px);background:rgba(255,255,255,.1)}
+    .interview-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .interview-title{font-size:1rem;font-weight:700;color:#ffcc00}
+    .interview-details{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:0.8rem;color:#c0d0e8}
+    .interview-actions{display:flex;gap:10px;margin-top:12px}
+    .join-btn{background:#28a745;color:#fff;padding:6px 14px;border-radius:20px;text-decoration:none;font-size:0.75rem}
+    .meeting-link{background:#17a2b8;color:#fff;padding:6px 14px;border-radius:20px;text-decoration:none;font-size:0.75rem}
+    .ranking-list{display:flex;flex-direction:column;gap:15px}
+    .ranking-item{display:flex;align-items:center;gap:20px;padding:20px;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border-radius:24px;transition:all .3s;border:1px solid rgba(255,204,0,.15);flex-wrap:wrap}
+    .ranking-item:hover{transform:translateX(12px) scale(1.02);background:rgba(255,204,0,.1)}
+    .rank-number{width:60px;height:60px;background:linear-gradient(135deg,#ffcc00,#ffaa00);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.5rem;color:#1a472a}
+    .rank-info{flex:1}
+    .rank-name{font-weight:700;color:#fff;font-size:1rem}
+    .rank-details{font-size:.75rem;color:#c0d0e8;margin-top:5px}
+    .rank-score{font-weight:800;color:#ffcc00;font-size:1.4rem}
+    @media (max-width:768px){.navbar{padding:16px 20px}.dashboard-container{padding:20px}.tab-btn{padding:10px 16px;font-size:.8rem}.stats-grid{grid-template-columns:1fr}.modal-content{margin:20px;padding:25px}.form-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="bg-3d" id="bg3d"></div>
+
+  <div class="navbar">
+    <div class="logo-area">
+      <div class="logo-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="logo-text"><h1>Vidyasagar University</h1><p>AI Interview | Faculty Portal</p></div>
+    </div>
+    <div class="user-info" id="userInfo">
+      <div class="user-avatar" id="teacherAvatar">👨‍🏫</div>
+      <div class="user-details">
+        <h4 id="teacherName">Loading...</h4>
+        <p id="teacherDept">Department: ---</p>
+      </div>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Exit</button>
+    </div>
+  </div>
+
+  <div class="dashboard-container" id="dashboardContent">
+    <div class="loading-spinner" style="text-align:center; padding:60px;">
+      <i class="fas fa-spinner fa-pulse" style="font-size:3rem; color:#ffcc00;"></i>
+      <p style="margin-top:20px;">Loading 3D Dashboard...</p>
+    </div>
+  </div>
+
+  <!-- Register Student Modal -->
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-user-plus"></i> Register New Student</h2>
+        <span class="close-modal" onclick="closeRegisterModal()">&times;</span>
+      </div>
+      <form id="registerForm">
+        <div class="form-row">
+          <div class="form-group"><label>Registration No *</label><input type="text" id="reg_registration_no" required placeholder="VU211013840"></div>
+          <div class="form-group"><label>Roll Number</label><input type="text" id="reg_roll_number" placeholder="VU/PG/100/24/..."></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="reg_full_name" required></div>
+          <div class="form-group"><label>Email *</label><input type="email" id="reg_email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Enter valid email address"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Phone *</label><input type="tel" id="reg_phone" required pattern="[0-9]{10}" title="Enter 10-digit mobile number"></div>
+          <div class="form-group"><label>Password *</label><input type="password" id="reg_password" required minlength="6" placeholder="Min 6 characters"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department *</label>
+            <select id="reg_department" required>
+              <option value="">Select Department</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="MCA">MCA</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Mechanical">Mechanical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Semester *</label>
+            <select id="reg_semester" required>
+              <option value="">Select Semester</option>
+              <option>1st</option><option>2nd</option><option>3rd</option><option>4th</option>
+              <option>5th</option><option>6th</option><option>7th</option><option>8th</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Batch Year</label><input type="number" id="reg_batch_year" value="2024" min="2000" max="2030"></div>
+          <div class="form-group">
+            <label>Course *</label>
+            <select id="reg_course" required>
+              <option value="">Select Course</option>
+              <option value="MSc Computer Science">MSc Computer Science</option>
+              <option value="MCA">MCA</option>
+              <option value="B.Tech Computer Science">B.Tech Computer Science</option>
+              <option value="BCA">BCA</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Technical Score (0-100)</label><input type="number" id="reg_technical_score" min="0" max="100" value="0"></div>
+          <div class="form-group"><label>Communication Score</label><input type="number" id="reg_communication_score" min="0" max="100" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Problem Solving Score</label><input type="number" id="reg_problem_solving_score" min="0" max="100" value="0"></div>
+          <div class="form-group"><label>Confidence Score</label><input type="number" id="reg_confidence_score" min="0" max="100" value="0"></div>
+        </div>
+        <div class="form-group"><label>Address</label><textarea id="reg_address" rows="2"></textarea></div>
+        <button type="submit" class="btn-3d"><i class="fas fa-save"></i> Register Student</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Schedule Interview Modal -->
+  <div id="scheduleModal" class="modal">
+    <div class="modal-content"><div class="modal-header"><h2><i class="fas fa-calendar-plus"></i> Schedule Interview</h2><span class="close-modal" onclick="closeScheduleModal()">&times;</span></div>
+      <form id="scheduleForm">
+        <div class="form-group"><label>Category *</label><select id="interview_category" required><option value="Company">🏢 Company</option><option value="Departmental">📚 Departmental</option><option value="Placement">🎯 Placement</option><option value="Other">📌 Other</option></select></div>
+        <div class="form-group"><label>Company Name</label><input type="text" id="schedule_company" placeholder="e.g., Google India"></div>
+        <div class="form-group"><label>Interview Title *</label><input type="text" id="schedule_title" required></div>
+        <div class="form-row"><div class="form-group"><label>Type *</label><select id="schedule_type"><option>Technical</option><option>HR</option><option>Coding</option><option>Aptitude</option></select></div>
+        <div class="form-group"><label>Duration (mins)</label><input type="number" id="schedule_duration" value="45"></div></div>
+        <div class="form-row"><div class="form-group"><label>Date *</label><input type="date" id="schedule_date" required></div>
+        <div class="form-group"><label>Time *</label><input type="time" id="schedule_time" required></div></div>
+        <div class="form-row"><div class="form-group"><label>Interviewer</label><input type="text" id="schedule_interviewer"></div>
+        <div class="form-group"><label>Meeting Link</label><input type="url" id="schedule_link" placeholder="https://meet.google.com/..."></div></div>
+        <div class="form-group"><label>Student Registration No *</label><input type="text" id="schedule_student_reg" required></div>
+        <div class="form-group"><label>Notes</label><textarea id="schedule_notes" rows="2"></textarea></div>
+        <button type="submit" class="btn-3d"><i class="fas fa-save"></i> Schedule</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="message" class="message"></div>
+
+  <script>
+    function create3DBackground(){
+      const c=document.getElementById('bg3d');
+      for(let i=0;i<30;i++){const d=document.createElement('div');d.className='cube';d.style.left=Math.random()*100+'%';d.style.top=Math.random()*100+'%';d.style.width=(Math.random()*80+30)+'px';d.style.height=d.style.width;d.style.animationDelay=Math.random()*20+'s';d.style.animationDuration=(Math.random()*20+15)+'s';c.appendChild(d);}
+    }
+    create3DBackground();
+
+    const SUPABASE_URL='https://mfivynrqcibkpiqkgjqt.supabase.co';
+    const SUPABASE_KEY='sb_publishable_DAk1iF9K-968ldj4BQW3tw_IxTC5eWV';
+    let allStudents=[],scheduledInterviews=[],currentTeacher=null,currentTab='overview';
+
+    async function supabaseFetch(endpoint,options={}){
+      const url=`${SUPABASE_URL}/rest/v1/${endpoint}`;
+      const headers={'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
+      const res=await fetch(url,{...options,headers});
+      if(!res.ok) throw new Error(`API Error ${res.status}`);
+      if(res.status===204) return [];
+      return res.json();
+    }
+
+    // Register Student with validation
+    document.getElementById('registerForm')?.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const phone=document.getElementById('reg_phone').value.trim();
+      if(!/^\d{10}$/.test(phone)){showMessage('Enter valid 10-digit phone number','error');return;}
+      const email=document.getElementById('reg_email').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMessage('Enter valid email address','error');return;}
+      try{
+        const studentData={
+          registration_no:document.getElementById('reg_registration_no').value.trim(),
+          roll_number:document.getElementById('reg_roll_number').value.trim()||null,
+          full_name:document.getElementById('reg_full_name').value.trim(),
+          email:email,
+          phone:phone,
+          password:document.getElementById('reg_password').value,
+          department:document.getElementById('reg_department').value,
+          semester:document.getElementById('reg_semester').value,
+          batch_year:parseInt(document.getElementById('reg_batch_year').value)||null,
+          course:document.getElementById('reg_course').value,
+          technical_score:parseInt(document.getElementById('reg_technical_score').value)||0,
+          communication_score:parseInt(document.getElementById('reg_communication_score').value)||0,
+          problem_solving_score:parseInt(document.getElementById('reg_problem_solving_score').value)||0,
+          confidence_score:parseInt(document.getElementById('reg_confidence_score').value)||0,
+          address:document.getElementById('reg_address').value.trim()||null,
+          attendance_percentage:0,total_interviews_taken:0,is_active:true,is_verified:true,account_status:'Active'
+        };
+        if(!studentData.registration_no||!studentData.full_name||!studentData.email||!studentData.password) throw new Error('Required fields missing');
+        await supabaseFetch('student',{method:'POST',body:JSON.stringify(studentData)});
+        showMessage('✓ Student registered!','success');
+        closeRegisterModal();
+        await loadStudents();renderDashboard();
+      } catch(err){showMessage('✗ Registration failed: '+err.message,'error');}
+    });
+
+    async function loadTeacherData(){
+      try{
+        const storedId=sessionStorage.getItem('teacherId')||sessionStorage.getItem('teacher_id');
+        if(!storedId) throw new Error('Session expired');
+        const rows=await supabaseFetch(`teacher?select=*&teacher_id=eq.${encodeURIComponent(storedId)}&limit=1`);
+        if(!rows||rows.length===0) throw new Error('Teacher not found');
+        currentTeacher=rows[0];
+        document.getElementById('teacherName').textContent=currentTeacher.full_name||'N/A';
+        document.getElementById('teacherDept').textContent=`Dept: ${currentTeacher.department||'N/A'}`;
+        document.getElementById('teacherAvatar').innerHTML=(currentTeacher.full_name||'T').charAt(0).toUpperCase();
+      } catch(err){showMessage(err.message,'error');setTimeout(()=>{sessionStorage.clear();window.location.href='login.html';},1500);}
+    }
+
+    async function loadStudents(){const data=await supabaseFetch('student?select=*&order=created_at.desc');allStudents=data||[];}
+    async function loadScheduledInterviews(){const data=await supabaseFetch('scheduled_interviews?select=*&order=scheduled_date.desc');scheduledInterviews=data||[];}
+    function getPerf(s){return Number(s.overall_performance||0);}
+
+    function renderDashboard(){
+      const total=allStudents.length;
+      const avgPerf=total>0?Math.round(allStudents.reduce((s,a)=>s+getPerf(a),0)/total):0;
+      const topStudent=[...allStudents].sort((a,b)=>getPerf(b)-getPerf(a))[0];
+      const pendingCount=scheduledInterviews.filter(i=>i.status==='Scheduled').length;
+      const html=`<div class="tabs"><button class="tab-btn ${currentTab==='overview'?'active':''}" onclick="switchTab('overview')"><i class="fas fa-chart-pie"></i> Overview</button><button class="tab-btn ${currentTab==='students'?'active':''}" onclick="switchTab('students')"><i class="fas fa-users"></i> Students</button><button class="tab-btn ${currentTab==='ranking'?'active':''}" onclick="switchTab('ranking')"><i class="fas fa-trophy"></i> Ranking</button><button class="tab-btn ${currentTab==='upcoming'?'active':''}" onclick="switchTab('upcoming')"><i class="fas fa-calendar-alt"></i> Interviews</button><button class="tab-btn" onclick="openRegisterModal()"><i class="fas fa-user-plus"></i> Register</button><button class="tab-btn" onclick="openScheduleModal()"><i class="fas fa-calendar-plus"></i> Schedule</button></div>
+      <div id="overviewTab" style="display:${currentTab==='overview'?'block':'none'}"><div class="stats-grid"><div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${total}</h3><p>Total Students</p></div></div><div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-info"><h3>${avgPerf}%</h3><p>Avg Performance</p></div></div><div class="stat-card"><div class="stat-icon"><i class="fas fa-trophy"></i></div><div class="stat-info"><h3>${topStudent?.full_name||'N/A'}</h3><p>Top Performer</p></div></div><div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3>${pendingCount}</h3><p>Upcoming</p></div></div></div></div>
+      <div id="studentsTab" style="display:${currentTab==='students'?'block':'none'}"><div class="search-bar"><i class="fas fa-search"></i><input type="text" class="search-input" id="searchInput" placeholder="Search..." onkeyup="filterStudents()"></div><div class="student-table-container"><table><thead><tr><th>Name</th><th>Reg No</th><th>Email</th><th>Dept</th><th>Sem</th><th>Performance</th><th>Actions</th></tr></thead><tbody id="studentsTableBody"></tbody></td></div></div>
+      <div id="rankingTab" style="display:${currentTab==='ranking'?'block':'none'}"><div class="student-table-container"><h3 style="margin-bottom:20px;color:#ffcc00;">🏆 Performance Ranking</h3><div id="rankingList"></div></div></div>
+      <div id="upcomingTab" style="display:${currentTab==='upcoming'?'block':'none'}"><div class="student-table-container"><h3 style="margin-bottom:20px;color:#ffcc00;">📅 Scheduled Interviews</h3><div id="upcomingList"></div></div></div>`;
+      document.getElementById('dashboardContent').innerHTML=html;
+      if(currentTab==='students') renderStudentsTable();
+      if(currentTab==='ranking') renderRanking();
+      if(currentTab==='upcoming') renderUpcomingList();
+    }
+
+    function renderStudentsTable(){
+      const search=document.getElementById('searchInput')?.value.toLowerCase()||'';
+      const filtered=allStudents.filter(s=>(s.full_name||'').toLowerCase().includes(search)||(s.registration_no||'').toLowerCase().includes(search));
+      const tbody=document.getElementById('studentsTableBody');
+      if(!tbody) return;
+      if(filtered.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;">No students found</td></tr>';return;}
+      tbody.innerHTML=filtered.map(s=>{const p=getPerf(s);const pc=p>=80?'performance-high':(p>=60?'performance-medium':'performance-low');return `<tr><td><strong>${s.full_name}</strong></td><td>${s.registration_no}</td><td>${s.email}</td><td>${s.department||'N/A'}</td><td>${s.semester||'N/A'}</td><td><span class="performance-badge ${pc}">${p}%</span></td><td><button class="view-btn" onclick="viewStudent('${s.registration_no}')"><i class="fas fa-eye"></i> View</button> <button class="delete-btn" onclick="deleteStudent('${s.registration_no}')"><i class="fas fa-trash"></i> Delete</button> <button class="schedule-btn" onclick="openScheduleForStudent('${s.registration_no}')"><i class="fas fa-calendar-plus"></i> Schedule</button></td></tr>`;}).join('');
+    }
+
+    function renderRanking(){
+      const ranking=[...allStudents].sort((a,b)=>getPerf(b)-getPerf(a));
+      const container=document.getElementById('rankingList');
+      if(!container) return;
+      if(ranking.length===0){container.innerHTML='<div style="text-align:center;padding:40px;">No students</div>';return;}
+      container.innerHTML=ranking.map((s,i)=>`<div class="ranking-item"><div class="rank-number">${i+1}</div><div class="rank-info"><div class="rank-name">${s.full_name}</div><div class="rank-details">${s.registration_no} | ${s.department||'N/A'}</div></div><div class="rank-score">${getPerf(s)}%</div><button class="view-btn" onclick="viewStudent('${s.registration_no}')"><i class="fas fa-eye"></i> View</button></div>`).join('');
+    }
+
+    function renderUpcomingList(){
+      const container=document.getElementById('upcomingList');
+      if(!container) return;
+      const up=scheduledInterviews.filter(i=>i.status==='Scheduled');
+      if(up.length===0){container.innerHTML='<div style="text-align:center;padding:40px;">No upcoming interviews</div>';return;}
+      container.innerHTML=up.map(i=>`<div class="interview-card"><div class="interview-header"><div class="interview-title">${i.interview_title} - ${i.student_registration_no}</div></div><div class="interview-details"><span>📅 ${i.scheduled_date}</span><span>⏰ ${i.scheduled_time?.slice(0,5)}</span><span>👤 ${i.interviewer_name||'TBD'}</span></div><div class="interview-actions"><button class="join-btn" onclick="window.open('${i.meeting_link||'#'}','_blank')">Join</button><button class="delete-btn" onclick="deleteInterview(${i.id})">Delete</button></div></div>`).join('');
+    }
+
+    async function deleteStudent(regNo){if(!confirm('Delete this student?')) return;try{await supabaseFetch(`student?registration_no=eq.${regNo}`,{method:'DELETE'});showMessage('Deleted','success');await loadStudents();renderDashboard();}catch(e){showMessage('Delete failed','error');}}
+    async function deleteInterview(id){if(!confirm('Delete this interview?')) return;try{await supabaseFetch(`scheduled_interviews?id=eq.${id}`,{method:'DELETE'});showMessage('Deleted','success');await loadScheduledInterviews();renderDashboard();}catch(e){showMessage('Delete failed','error');}}
+    function viewStudent(regNo){const s=allStudents.find(x=>x.registration_no===regNo);if(s) alert(`📋 ${s.full_name}\nReg: ${s.registration_no}\nEmail: ${s.email}\nDept: ${s.department}\nSem: ${s.semester}\nPerformance: ${getPerf(s)}%`);}
+    function openRegisterModal(){document.getElementById('registerModal').style.display='block';}
+    function closeRegisterModal(){document.getElementById('registerModal').style.display='none';}
+    function openScheduleModal(){document.getElementById('scheduleModal').style.display='block';}
+    function closeScheduleModal(){document.getElementById('scheduleModal').style.display='none';}
+    function openScheduleForStudent(regNo){document.getElementById('schedule_student_reg').value=regNo;openScheduleModal();}
+    function filterStudents(){renderStudentsTable();}
+    function switchTab(tab){currentTab=tab;renderDashboard();}
+    function showMessage(msg,type){const m=document.getElementById('message');m.innerHTML=`<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}"></i> ${msg}`;m.className=`message ${type}`;m.style.display='block';setTimeout(()=>m.style.display='none',3200);}
+    function logout(){sessionStorage.clear();window.location.href='login.html';}
+
+    document.getElementById('scheduleForm')?.addEventListener('submit',async(e)=>{e.preventDefault();try{const reg=document.getElementById('schedule_student_reg').value.trim();if(!reg) throw new Error('Student required');const base={interview_category:document.getElementById('interview_category').value,company_name:document.getElementById('interview_category').value==='Company'?document.getElementById('schedule_company').value:null,interview_title:document.getElementById('schedule_title').value,interview_type:document.getElementById('schedule_type').value,scheduled_date:document.getElementById('schedule_date').value,scheduled_time:document.getElementById('schedule_time').value,duration_minutes:parseInt(document.getElementById('schedule_duration').value)||45,meeting_link:document.getElementById('schedule_link').value||null,interviewer_name:document.getElementById('schedule_interviewer').value||null,notes:document.getElementById('schedule_notes').value||null,status:'Scheduled',student_registration_no:reg};if(!base.interview_title||!base.scheduled_date||!base.scheduled_time) throw new Error('Title, date, time required');await supabaseFetch('scheduled_interviews',{method:'POST',body:JSON.stringify(base)});showMessage('Interview scheduled!','success');closeScheduleModal();await loadScheduledInterviews();renderDashboard();}catch(err){showMessage(err.message,'error');}});
+
+    async function bootstrapData(){await loadTeacherData();await loadStudents();await loadScheduledInterviews();renderDashboard();showMessage(`✨ Loaded ${allStudents.length} students`,'success');}
+    window.onclick=(e)=>{if(e.target===document.getElementById('registerModal')) closeRegisterModal();if(e.target===document.getElementById('scheduleModal')) closeScheduleModal();};
+    document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('isLoggedIn')!=='true') window.location.href='login.html';else bootstrapData();});
+  </script>
+</body>
+</html>

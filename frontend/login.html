@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>VU AI Interview | Student & Faculty Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: #0a0f1a;
+            overflow-x: hidden;
+        }
+
+        .split-container { display: flex; min-height: 100vh; width: 100%; }
+
+        /* ── Left Brand Side ── */
+        .brand-side {
+            flex: 1.2;
+            background: linear-gradient(145deg, #001b36 0%, #00122a 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            overflow: hidden;
+        }
+
+        .brand-side::before {
+            content: '';
+            position: absolute;
+            top: -20%; right: -20%;
+            width: 80%; height: 80%;
+            background: radial-gradient(circle, rgba(255,204,0,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .brand-side::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 30%;
+            background: linear-gradient(0deg, rgba(0,0,0,0.2), transparent);
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: floatParticle 20s infinite linear;
+        }
+
+        @keyframes floatParticle {
+            0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+            10%  { opacity: 0.4; }
+            90%  { opacity: 0.3; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .brand-content { position: relative; z-index: 2; max-width: 500px; }
+
+        .university-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            padding: 10px 24px;
+            border-radius: 60px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255,204,0,0.3);
+        }
+        .university-badge i    { font-size: 1.5rem; color: #ffcc00; }
+        .university-badge span { font-size: 0.85rem; font-weight: 500; color: #ffdd88; letter-spacing: 0.5px; }
+
+        .brand-side h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff, #ffdd99);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .brand-desc {
+            font-size: 1.1rem;
+            color: #aac8ff;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .feature-list { display: flex; flex-direction: column; gap: 18px; }
+
+        .feature-item { display: flex; align-items: center; gap: 14px; color: #cce4ff; }
+
+        .feature-item i {
+            width: 32px; height: 32px;
+            background: rgba(255,204,0,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #ffcc00;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Right Login Side ── */
+        .login-side {
+            flex: 0.9;
+            background: #f8fafd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-radius: 48px;
+            padding: 40px 36px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        /* Form Header */
+        .form-header { text-align: center; margin-bottom: 32px; }
+
+        .logo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
+
+        .logo-circle {
+            width: 70px; height: 70px;
+            background: linear-gradient(135deg, #003366, #1a4d8c);
+            border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 20px rgba(0,51,102,0.2);
+        }
+        .logo-circle i  { font-size: 2.5rem; color: #ffcc00; }
+        .form-header h2 { font-size: 1.6rem; font-weight: 700; color: #003366; margin-bottom: 6px; }
+        .form-header p  { font-size: 0.85rem; color: #6c86a3; }
+
+        /* Role Tabs */
+        .role-selector {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            background: #f1f4f9;
+            padding: 6px;
+            border-radius: 60px;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px;
+            color: #5a6e8c;
+            font-family: 'Inter', sans-serif;
+        }
+        .role-btn i { font-size: 1.1rem; }
+
+        .role-btn.active {
+            background: linear-gradient(105deg, #003366, #1a4d8c);
+            color: white;
+            box-shadow: 0 8px 20px rgba(0,51,102,0.25);
+        }
+        .role-btn:last-child.active {
+            background: linear-gradient(105deg, #2c5a2e, #1e7b48);
+        }
+
+        /* Form Groups */
+        .form-container { transition: all 0.3s ease; }
+
+        .form-group { margin-bottom: 24px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            margin-left: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Input wrapper — holds left icon + input + optional eye button */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            color: #9aaec9;
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 15px 52px 15px 50px; /* right pad makes room for eye icon */
+            border: 2px solid #e8edf4;
+            border-radius: 28px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.25s ease;
+            background: white;
+            color: #1e2a3e;
+        }
+
+        /* Text inputs (no eye button) — reduce right padding */
+        .input-wrapper input[type="text"] {
+            padding-right: 20px;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #003366;
+            box-shadow: 0 0 0 4px rgba(0,51,102,0.08);
+        }
+
+        /* Show/hide password eye button */
+        .eye-toggle {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #9aaec9;
+            font-size: 1rem;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .eye-toggle:hover { color: #003366; background: rgba(0,51,102,0.06); }
+
+        /* Login Buttons */
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(105deg, #003366, #124a7a);
+            border: none;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+        .login-btn.teacher-btn { background: linear-gradient(105deg, #2c5a2e, #1e7b48); }
+        .login-btn:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 12px 28px rgba(0,0,0,0.2); }
+        .login-btn:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+
+        /* Status Messages */
+        .status-msg {
+            margin-bottom: 24px;
+            padding: 12px 18px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: fadeMsg 0.3s ease;
+        }
+        @keyframes fadeMsg {
+            from { opacity: 0; transform: translateY(-5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .error-style   { background: #fee9e6; color: #c23d22; border-left: 4px solid #ff6b4a; }
+        .success-style { background: #e3f7ec; color: #1e7b48;  border-left: 4px solid #2ecc71; }
+
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #eef2f8;
+            font-size: 0.7rem;
+            color: #8a9bb0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .teacher-hint {
+            font-size: 0.7rem;
+            color: #7c9c6e;
+            text-align: center;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .form-hidden { display: none; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .brand-side h1 { font-size: 2.5rem; }
+            .brand-side    { padding: 40px; }
+        }
+
+        @media (max-width: 900px) {
+            .split-container { flex-direction: column; }
+            .brand-side {
+                flex: none;
+                padding: 50px 30px;
+                min-height: 45vh;
+                text-align: center;
+            }
+            .brand-content { max-width: 100%; text-align: center; }
+            .feature-list  { align-items: center; }
+            .feature-item  { justify-content: center; }
+            .university-badge { margin: 0 auto 32px auto; }
+            .login-side { flex: none; padding: 40px 20px; }
+            .login-card { padding: 32px 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .role-btn       { padding: 10px 12px; font-size: 0.85rem; }
+            .role-btn i     { font-size: 0.9rem; }
+            .login-card     { padding: 28px 20px; }
+            .brand-side h1  { font-size: 1.8rem; }
+            .logo-circle    { width: 55px; height: 55px; }
+            .logo-circle i  { font-size: 2rem; }
+            .form-header h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="split-container">
+
+    <!-- ══ Left Brand Side ══ -->
+    <div class="brand-side" id="particlesContainer">
+        <div class="brand-content">
+            <div class="university-badge">
+                <i class="fas fa-university"></i>
+                <span>Est. 1981 | NAAC A+</span>
+            </div>
+            <h1>AI-Powered<br>Interview System</h1>
+            <p class="brand-desc">Revolutionizing assessments with intelligent conversational AI. Real-time feedback, automated evaluation, and seamless experience for students and faculty.</p>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Interviewer Sophia • Natural Conversation</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Instant Performance Analytics</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure & Encrypted Sessions</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-microphone-alt"></i>
+                    <span>Voice & Text Dual Mode</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Right Login Side ══ -->
+    <div class="login-side">
+        <div class="login-card">
+
+            <div class="form-header">
+                <div class="logo-container">
+                    <div class="logo-circle">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+                <h2>Vidyasagar University</h2>
+                <p>AI Interview Portal Access</p>
+            </div>
+
+            <!-- Role Tabs -->
+            <div class="role-selector">
+                <button class="role-btn active" id="studentRoleBtn">
+                    <i class="fas fa-user-graduate"></i> Student
+                </button>
+                <button class="role-btn" id="teacherRoleBtn">
+                    <i class="fas fa-chalkboard-user"></i> Faculty
+                </button>
+            </div>
+
+            <!-- ════ Student Login Form ════ -->
+            <div id="studentForm" class="form-container">
+                <div id="studentStatus" class="status-msg"></div>
+                <form id="studentLoginForm">
+
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> Registration Number</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hashtag input-icon"></i>
+                            <input type="text" id="studentRegNo"
+                                   placeholder="e.g., VU211013839"
+                                   autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" id="studentPassword"
+                                   placeholder="Enter your password" required>
+                            <button type="button" class="eye-toggle"
+                                    onclick="togglePassword('studentPassword', this)"
+                                    tabindex="-1" aria-label="Show/hide password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn" id="studentSubmitBtn">
+                        <i class="fas fa-arrow-right-to-bracket"></i>
+                        <span>Access Student Portal</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ════ Teacher Login Form ════ -->
+            <div id="teacherForm" class="form-container form-hidden">
+                <div id="teacherStatus" class="status-msg"></div>
+                <form id="teacherLoginForm">
+
+                    <div class="form-group">
+                        <label><i class="fas fa-id-badge"></i> Faculty Email / Faculty ID</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="text" id="teacherEmail"
+                                   placeholder="faculty@vidyasagar.ac.in  or  VU-TCH-001"
+                                   autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" id="teacherPassword"
+                                   placeholder="Enter faculty password" required>
+                            <button type="button" class="eye-toggle"
+                                    onclick="togglePassword('teacherPassword', this)"
+                                    tabindex="-1" aria-label="Show/hide password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn teacher-btn" id="teacherSubmitBtn">
+                        <i class="fas fa-chalkboard-user"></i>
+                        <span>Access Faculty Dashboard</span>
+                    </button>
+                </form>
+                <div class="teacher-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Use your registered faculty email or Faculty ID (e.g. VU-TCH-001)
+                </div>
+            </div>
+
+            <div class="login-footer">
+                <span><i class="far fa-copyright"></i> 2026 VU Examination Cell</span>
+                <span><i class="fas fa-brain"></i> Nova AI Interview v2.0</span>
+                <span><i class="fas fa-shield-hooded"></i> End-to-End Encrypted</span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Supabase ─────────────────────────────────────────────────────────────
+    const SB_URL = 'https://mfivynrqcibkpiqkgjqt.supabase.co';
+    const SB_KEY = 'sb_publishable_DAk1iF9K-968ldj4BQW3tw_IxTC5eWV';
+    const { createClient } = supabase;
+    const _supabase = createClient(SB_URL, SB_KEY);
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const studentRoleBtn   = document.getElementById('studentRoleBtn');
+    const teacherRoleBtn   = document.getElementById('teacherRoleBtn');
+    const studentFormDiv   = document.getElementById('studentForm');
+    const teacherFormDiv   = document.getElementById('teacherForm');
+    const studentForm      = document.getElementById('studentLoginForm');
+    const teacherForm      = document.getElementById('teacherLoginForm');
+    const studentSubmitBtn = document.getElementById('studentSubmitBtn');
+    const teacherSubmitBtn = document.getElementById('teacherSubmitBtn');
+    const studentStatus    = document.getElementById('studentStatus');
+    const teacherStatus    = document.getElementById('teacherStatus');
+
+    let activeRole = 'student';
+
+    // ── Show / Hide password ─────────────────────────────────────────────────
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon  = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            btn.style.color = '#003366';
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            btn.style.color = '#9aaec9';
+        }
+        input.focus();
+    }
+
+    // ── Role toggle ──────────────────────────────────────────────────────────
+    function setActiveRole(role) {
+        activeRole = role;
+        if (role === 'student') {
+            studentRoleBtn.classList.add('active');
+            teacherRoleBtn.classList.remove('active');
+            studentFormDiv.classList.remove('form-hidden');
+            teacherFormDiv.classList.add('form-hidden');
+        } else {
+            teacherRoleBtn.classList.add('active');
+            studentRoleBtn.classList.remove('active');
+            teacherFormDiv.classList.remove('form-hidden');
+            studentFormDiv.classList.add('form-hidden');
+        }
+        hideStatusMessages();
+    }
+
+    function hideStatusMessages() {
+        studentStatus.style.display = 'none';
+        teacherStatus.style.display = 'none';
+    }
+
+    function showStatusMessage(el, message, type) {
+        el.innerHTML     = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> ${message}`;
+        el.className     = `status-msg ${type === 'success' ? 'success-style' : 'error-style'}`;
+        el.style.display = 'flex';
+        setTimeout(() => {
+            el.style.opacity = '0';
+            setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 300);
+        }, 4500);
+    }
+
+    function setButtonLoading(btn, loading, isTeacher = false) {
+        if (loading) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying...';
+            btn.disabled  = true;
+        } else {
+            btn.innerHTML = isTeacher
+                ? '<i class="fas fa-chalkboard-user"></i><span>Access Faculty Dashboard</span>'
+                : '<i class="fas fa-arrow-right-to-bracket"></i><span>Access Student Portal</span>';
+            btn.disabled = false;
+        }
+    }
+
+    // ── Floating particles ───────────────────────────────────────────────────
+    (function createParticles() {
+        const container = document.getElementById('particlesContainer');
+        for (let i = 0; i < 40; i++) {
+            const p    = document.createElement('div');
+            const size = Math.random() * 35 + 8;
+            p.classList.add('particle');
+            p.style.cssText = `
+                width:${size}px;
+                height:${size}px;
+                left:${Math.random() * 100}%;
+                bottom:-20px;
+                animation-duration:${Math.random() * 18 + 12}s;
+                animation-delay:${Math.random() * 15}s;
+                background:rgba(255,204,0,${Math.random() * 0.2 + 0.05});
+            `;
+            container.appendChild(p);
+        }
+    })();
+
+    // ── Input focus micro-animation ──────────────────────────────────────────
+    document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+        const input = wrapper.querySelector('input');
+        input.addEventListener('focus', () => { wrapper.style.transform = 'translateX(3px)'; });
+        input.addEventListener('blur',  () => { wrapper.style.transform = 'translateX(0)'; });
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // STUDENT LOGIN
+    // ════════════════════════════════════════════════════════════════════════
+    studentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideStatusMessages();
+        setButtonLoading(studentSubmitBtn, true, false);
+
+        const registration_no = document.getElementById('studentRegNo').value.trim();
+        const password        = document.getElementById('studentPassword').value.trim();
+
+        if (!registration_no || !password) {
+            showStatusMessage(studentStatus, 'Please fill all fields.', 'error');
+            setButtonLoading(studentSubmitBtn, false, false);
+            return;
+        }
+
+        try {
+            const { data, error } = await _supabase
+                .from('student')
+                .select('*')
+                .eq('registration_no', registration_no)
+                .maybeSingle();
+
+            if (error) throw new Error('Database error: ' + error.message);
+            if (!data)  throw new Error('Registration number not found. Please check and try again.');
+
+            if (data.account_status && data.account_status !== 'Active')
+                throw new Error(`Your account is "${data.account_status}". Contact the administrator.`);
+
+            if (data.password.toString() !== password.toString())
+                throw new Error('Incorrect password. Please try again.');
+
+            showStatusMessage(studentStatus, `Welcome ${data.full_name}! Redirecting...`, 'success');
+
+            sessionStorage.setItem('isLoggedIn',  'true');
+            sessionStorage.setItem('userRole',     'student');
+            sessionStorage.setItem('studentName',  data.full_name);
+            sessionStorage.setItem('regNo',        data.registration_no);
+            sessionStorage.setItem('department',   data.department || '');
+            sessionStorage.setItem('semester',     data.semester   || '');
+            sessionStorage.setItem('course',       data.course     || '');
+
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+
+        } catch (err) {
+            showStatusMessage(studentStatus, err.message, 'error');
+            setButtonLoading(studentSubmitBtn, false, false);
+        }
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TEACHER LOGIN  —  queries the teacher table in Supabase
+    // Two-step lookup: first by email, then by teacher_id if not found
+    // ════════════════════════════════════════════════════════════════════════
+    teacherForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideStatusMessages();
+        setButtonLoading(teacherSubmitBtn, true, true);
+
+        const emailInput = document.getElementById('teacherEmail').value.trim();
+        const password   = document.getElementById('teacherPassword').value.trim();
+
+        if (!emailInput || !password) {
+            showStatusMessage(teacherStatus, 'Please enter your Faculty Email / ID and password.', 'error');
+            setButtonLoading(teacherSubmitBtn, false, true);
+            return;
+        }
+
+        try {
+            // Step 1 — try email
+            let { data, error } = await _supabase
+                .from('teacher')
+                .select('*')
+                .eq('email', emailInput)
+                .maybeSingle();
+
+            if (error) throw new Error('Database error: ' + error.message);
+
+            // Step 2 — try teacher_id if email not matched
+            if (!data) {
+                const res = await _supabase
+                    .from('teacher')
+                    .select('*')
+                    .eq('teacher_id', emailInput)
+                    .maybeSingle();
+
+                if (res.error) throw new Error('Database error: ' + res.error.message);
+                data = res.data;
+            }
+
+            // Step 3 — record checks
+            if (!data) {
+                throw new Error('Faculty email or ID not found. Please check and try again.');
+            }
+
+            if (!data.is_active) {
+                throw new Error('Your account is inactive. Please contact the administrator.');
+            }
+
+            if (!data.is_verified) {
+                throw new Error('Your account is not yet verified. Please contact the administrator.');
+            }
+
+            if (data.account_status !== 'Active') {
+                throw new Error(`Account is currently "${data.account_status}". Please contact the administrator.`);
+            }
+
+            // Step 4 — password check
+            if (data.password.toString() !== password.toString()) {
+                throw new Error('Incorrect password. Please try again.');
+            }
+
+            // Step 5 — update last_login (fire and forget)
+            _supabase
+                .from('teacher')
+                .update({ last_login: new Date().toISOString() })
+                .eq('id', data.id)
+                .then(() => {});
+
+            // Step 6 — store session
+            sessionStorage.setItem('isLoggedIn',           'true');
+            sessionStorage.setItem('userRole',              'teacher');
+            sessionStorage.setItem('teacherName',           data.full_name);
+            sessionStorage.setItem('teacherEmail',          data.email);
+            sessionStorage.setItem('teacherId',             data.teacher_id);
+            sessionStorage.setItem('teacherDesignation',    data.designation      || '');
+            sessionStorage.setItem('teacherDepartment',     data.department       || '');
+            sessionStorage.setItem('teacherSpecialization', data.specialization   || '');
+            sessionStorage.setItem('teacherRole',           data.role             || 'Teacher');
+            sessionStorage.setItem('employeeCode',          data.employee_code    || '');
+
+            // Permission flags — read by teacher_dashboard.html to gate UI buttons
+            sessionStorage.setItem('canViewAllStudents',  data.can_view_all_students);
+            sessionStorage.setItem('canRegisterStudents', data.can_register_students);
+            sessionStorage.setItem('canDeleteStudents',   data.can_delete_students);
+            sessionStorage.setItem('canManageInterviews', data.can_manage_interviews);
+            sessionStorage.setItem('canExportReports',    data.can_export_reports);
+
+            showStatusMessage(
+                teacherStatus,
+                `Welcome ${data.full_name}! Redirecting to Faculty Dashboard...`,
+                'success'
+            );
+
+            setTimeout(() => { window.location.href = 'teacher_dashboard.html'; }, 1500);
+
+        } catch (err) {
+            showStatusMessage(teacherStatus, err.message, 'error');
+            setButtonLoading(teacherSubmitBtn, false, true);
+        }
+    });
+
+    // ── Role switch ──────────────────────────────────────────────────────────
+    studentRoleBtn.addEventListener('click', () => { if (activeRole !== 'student') setActiveRole('student'); });
+    teacherRoleBtn.addEventListener('click', () => { if (activeRole !== 'teacher') setActiveRole('teacher'); });
+
+    console.log('🎓 VU AI Interview Portal | Ready');
+</script>
+</body>
+</html>

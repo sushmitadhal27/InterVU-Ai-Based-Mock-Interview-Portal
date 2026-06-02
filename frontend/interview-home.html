@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>InterVU AI | Face Detection Interview System</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root{
+      --bg1:#0f0c29;
+      --bg2:#302b63;
+      --bg3:#24243e;
+      --glass:rgba(255,255,255,0.12);
+      --glass-border:rgba(255,255,255,0.24);
+      --primary:#667eea;
+      --primary2:#764ba2;
+      --success:#28a745;
+      --warn:#ffc107;
+      --danger:#dc3545;
+      --info:#17a2b8;
+      --textLight:rgba(255,255,255,.92);
+      --cardShadow: 0 20px 45px rgba(0,0,0,.25);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(118,75,162,.28), transparent 30%),
+        radial-gradient(circle at 90% 20%, rgba(102,126,234,.20), transparent 30%),
+        linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 20px;
+      color:#1f2937;
+    }
+
+    .container { max-width: 1450px; margin: 0 auto; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+      animation: fadeUp .6s ease;
+    }
+    .header h1 {
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      background: linear-gradient(135deg, #dbeafe, #c4b5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 3px 20px rgba(0,0,0,.2);
+    }
+    .header p { color: rgba(255,255,255,0.85); margin-top:6px; }
+
+    .setup-card {
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      border-radius: 30px;
+      padding: 30px;
+      margin-bottom: 26px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--cardShadow);
+      animation: fadeUp .6s ease;
+    }
+
+    .section-title{
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      opacity: .95;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size:.92rem;
+    }
+
+    .input-group select, .input-group input, .input-group textarea {
+      padding: 13px 14px;
+      background: rgba(255,255,255,.97);
+      border: 2px solid transparent;
+      border-radius: 14px;
+      font-size: 14px;
+      outline: none;
+      transition: all .2s ease;
+    }
+    .input-group textarea { min-height: 90px; resize: vertical; }
+
+    .input-group select:focus,
+    .input-group input:focus,
+    .input-group textarea:focus{
+      border-color: #a5b4fc;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+    }
+
+    .pill-note{
+      margin: 14px 0 0;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      color:#fff;
+      display: inline-flex;
+      gap:8px;
+      font-size: .82rem;
+      border:1px solid rgba(255,255,255,.2);
+    }
+
+    .mode-selector { display: flex; gap: 12px; margin: 16px 0 14px; }
+    .mode-btn {
+      flex: 1; padding: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.28);
+      color: white; border-radius: 40px;
+      cursor: pointer; font-weight: 600; transition: all 0.25s;
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(102,126,234,.35);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white; border: none;
+      padding: 12px 20px; border-radius: 50px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.25s;
+      box-shadow: 0 8px 16px rgba(102,126,234,.25);
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .interview-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      animation: fadeUp .5s ease;
+    }
+
+    .camera-card {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      border-radius: 26px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: var(--cardShadow);
+    }
+
+    .camera-container {
+      position: relative; border-radius: 18px;
+      overflow: hidden; background: #000; margin-bottom: 12px;
+    }
+
+    #videoElement {
+      width: 100%; height: auto;
+      transform: scaleX(-1); border-radius: 18px;
+      display:block;
+      max-height: 520px;
+      object-fit: cover;
+    }
+
+    .face-indicator {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(0,0,0,0.72);
+      padding: 7px 13px; border-radius: 30px;
+      color: white; font-size: 12px; z-index: 10;
+      border:1px solid rgba(255,255,255,.25);
+    }
+    .face-indicator.good    { background: rgba(40,167,69,.9); }
+    .face-indicator.warning { background: rgba(255,193,7,.9); color:#111; }
+    .face-indicator.bad     { background: rgba(220,53,69,.9); }
+
+    canvas {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; pointer-events: none;
+    }
+
+    .questions-card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 26px; padding: 20px;
+      box-shadow: var(--cardShadow);
+      border: 1px solid rgba(0,0,0,.04);
+    }
+
+    .question-counter{ font-weight: 700; color:#4b5563; margin-bottom:8px; }
+
+    .progress-bar {
+      height: 9px; background: #e5e7eb;
+      border-radius: 999px; overflow: hidden; margin: 4px 0 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      width:0%;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      transition: width .35s ease;
+    }
+
+    .timer {
+      text-align: center; font-size: 2.05rem;
+      font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      margin: 10px 0;
+      color:#111827;
+    }
+    .timer.warning { color: var(--danger); animation: pulse .55s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: .55; }
+    }
+
+    .question-box {
+      background: #f8fafc; border-radius: 16px;
+      padding: 16px; margin: 12px 0;
+      border:1px solid #e5e7eb;
+      min-height: 150px;
+    }
+    .question-text {
+      font-size: 1.06rem;
+      font-weight: 700;
+      color: #1f2937;
+      line-height:1.55;
+      white-space: pre-wrap;
+      min-height: 56px;
+    }
+    .typing-cursor::after{
+      content:'|';
+      animation: blink 1s infinite;
+      color:#6366f1;
+      margin-left:2px;
+    }
+    @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+    .answer-text {
+      width: 100%; padding: 13px 14px;
+      border: 2px solid #e5e7eb; border-radius: 14px;
+      font-size: .95rem; resize: vertical; margin: 12px 0;
+      outline: none;
+    }
+    .answer-text:focus{
+      border-color:#a5b4fc;
+      box-shadow:0 0 0 3px rgba(99,102,241,.15);
+    }
+
+    .voice-controls, .action-buttons {
+      display: flex; gap: 10px;
+      justify-content: center; margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .voice-btn { background: var(--success); }
+    .voice-btn.listening { background: var(--danger); animation: pulse 1s infinite; }
+
+    .status {
+      padding: 11px; border-radius: 12px;
+      margin-top: 12px; text-align: center; font-size: 0.85rem;
+      border:1px solid transparent;
+    }
+    .status-info    { background: #dbeafe; color: #1e40af; border-color:#bfdbfe; }
+    .status-warning { background: #fef3c7; color: #92400e; border-color:#fde68a; }
+    .status-success { background: #dcfce7; color: #166534; border-color:#bbf7d0; }
+    .status-error   { background: #fee2e2; color: #991b1b; border-color:#fecaca; }
+
+    .live-panel{
+      margin-top:14px;
+      background: rgba(255,255,255,.12);
+      border-radius: 14px; padding: 14px;
+      color:white; font-size:.84rem;
+      border:1px solid rgba(255,255,255,.2);
+      line-height:1.65;
+    }
+    .live-panel .title{ font-weight:700; margin-bottom:6px; color:#fde047; }
+
+    .save-indicator {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(0,0,0,.88); color: white;
+      padding: 11px 18px; border-radius: 30px;
+      font-size: .84rem; font-weight: 600;
+      display: none; z-index: 9999;
+      animation: slideIn .28s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .save-indicator.show { display: flex; align-items: center; gap: 8px; }
+    .save-indicator.success { background: rgba(40,167,69,.95); }
+    .save-indicator.error   { background: rgba(220,53,69,.95); }
+    .save-indicator.saving  { background: rgba(23,162,184,.95); }
+
+    @keyframes slideIn {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .intro-modal, .confirm-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.78);
+      backdrop-filter: blur(8px);
+      z-index: 1200; display: none;
+      justify-content: center; align-items: center;
+      padding: 18px;
+    }
+    .intro-modal.active, .confirm-modal.active { display: flex; }
+
+    .intro-content, .confirm-content {
+      background: white; border-radius: 28px;
+      padding: 34px; max-width: 560px; width:100%;
+      text-align: center; animation: slideUp .4s ease;
+      box-shadow: var(--cardShadow);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .intro-avatar {
+      width: 92px; height: 92px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; font-size: 2.5rem;
+      color:#fff;
+      box-shadow: 0 12px 24px rgba(102,126,234,.35);
+    }
+
+    .intro-buttons, .confirm-buttons {
+      display: flex; gap: 10px;
+      justify-content: center; margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .result-card {
+      background: rgba(255,255,255,.98);
+      border-radius: 30px; padding: 24px;
+      margin-top: 16px; display: none;
+      box-shadow: var(--cardShadow);
+      animation: fadeUp .45s ease;
+    }
+
+    .result-head{
+      text-align:center;
+      margin-bottom:12px;
+    }
+
+    .final-score {
+      font-size: 2.35rem; font-weight: 900;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      -webkit-background-clip: text;
+      background-clip: text; color: transparent;
+      line-height:1.35;
+      margin-bottom: 10px;
+    }
+
+    .result-metrics{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .metric{
+      background:#f8fafc;
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:12px;
+      text-align:center;
+    }
+    .metric .v{ font-size:1.2rem; font-weight:800; color:#111827; }
+    .metric .k{ font-size:.8rem; color:#6b7280; }
+
+    .feedback-item {
+      background: #f8fafc; border-radius: 13px;
+      padding: 14px; margin: 10px 0;
+      border-left: 4px solid var(--primary);
+      line-height:1.55;
+      border:1px solid #e5e7eb;
+    }
+
+    .accuracy-badge {
+      display: inline-block; padding: 4px 10px;
+      border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+      margin-left: 6px;
+    }
+    .accuracy-high   { background: #dcfce7; color: #166534; }
+    .accuracy-medium { background: #fef3c7; color: #92400e; }
+    .accuracy-low    { background: #fee2e2; color: #991b1b; }
+
+    .db-save-status {
+      margin-top: 12px; padding: 12px 15px;
+      border-radius: 12px; font-weight: 700;
+      text-align: center; font-size: .88rem;
+    }
+    .db-save-status.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .db-save-status.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .db-save-status.saving  { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+
+    .chip{
+      display:inline-block;
+      background:#eef2ff;
+      color:#4338ca;
+      border:1px solid #c7d2fe;
+      border-radius:999px;
+      padding:4px 10px;
+      margin:0 6px 6px 0;
+      font-size:.75rem;
+      font-weight:700;
+    }
+
+    @keyframes fadeUp{
+      from{ opacity:0; transform:translateY(14px);}
+      to{ opacity:1; transform:translateY(0);}
+    }
+
+    @media (max-width: 900px) {
+      .interview-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>🤖 InterVU AI Interview System</h1>
+    <p>Face Detection • Voice Recognition • AI Evaluation • Smart Insights</p>
+  </div>
+
+  <!-- Setup Card -->
+  <div class="setup-card" id="setupCard">
+    <div class="section-title">🧩 Interview Setup</div>
+
+    <div class="setup-grid">
+      <div class="input-group">
+        <label>📋 Interview Type</label>
+        <select id="interviewType">
+          <option value="Technical">💻 Technical</option>
+          <option value="HR">🤝 HR Interview</option>
+          <option value="Aptitude">🧠 Aptitude</option>
+          <option value="General">🗣️ General</option>
+          <option value="Mock">🎯 Mock</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>💼 Role / Specialization</label>
+        <select id="subCategory">
+          <option value="Python Developer">🐍 Python Developer</option>
+          <option value="Java Developer">☕ Java Developer</option>
+          <option value="AI/ML Engineer">🤖 AI/ML Engineer</option>
+          <option value="Data Scientist">📊 Data Scientist</option>
+          <option value="Data Analyst">📈 Data Analyst</option>
+          <option value="Software Engineer">💻 Software Engineer</option>
+          <option value="Full Stack Developer">🌐 Full Stack Developer</option>
+          <option value="General">🎯 General</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>📊 Difficulty</label>
+        <select id="difficulty">
+          <option value="Beginner">🌱 Beginner</option>
+          <option value="Intermediate" selected>⚡ Intermediate</option>
+          <option value="Advanced">🚀 Advanced</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>🧠 Experience Level (Years)</label>
+        <input type="number" id="experienceYears" min="0" max="30" value="1" />
+      </div>
+
+      <div class="input-group">
+        <label>🏢 Target Company (Optional)</label>
+        <input type="text" id="targetCompany" placeholder="e.g. TCS, Infosys, Google" />
+      </div>
+
+      <div class="input-group">
+        <label>🌐 Preferred Language</label>
+        <select id="preferredLanguage">
+          <option value="English" selected>English</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Hinglish">Hinglish</option>
+        </select>
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label>🛠️ Key Skills (comma separated)</label>
+        <input type="text" id="keySkills" placeholder="e.g. Python, SQL, DSA, React" />
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label>📝 Preparation Notes / Focus Area (Optional)</label>
+        <textarea id="prepNotes" placeholder="What do you want to practice today?"></textarea>
+      </div>
+    </div>
+
+    <div class="pill-note">💡 Tip: Add skills + focus area for better personalized questions</div>
+
+    <div class="mode-selector">
+      <button class="mode-btn active" data-mode="duration">⏱️ Set Duration</button>
+      <button class="mode-btn" data-mode="questions">🔢 Set Questions</button>
+    </div>
+
+    <div class="setup-grid">
+      <div class="input-group" id="durationGroup">
+        <label>⏱️ Interview Duration</label>
+        <select id="duration">
+          <option value="15">15 Minutes</option>
+          <option value="30" selected>30 Minutes</option>
+          <option value="60">1 Hour</option>
+          <option value="120">2 Hours</option>
+        </select>
+      </div>
+      <div class="input-group" id="questionsGroup" style="display:none;">
+        <label>🔢 Number of Questions</label>
+        <input type="number" id="questionCount" min="3" max="15" value="5" />
+      </div>
+      <div class="input-group">
+        <label>&nbsp;</label>
+        <button class="btn" id="startBtn">🎤 Start Interview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interview Section -->
+  <div id="interviewSection" style="display:none;">
+    <div class="interview-layout">
+
+      <!-- Camera Side -->
+      <div class="camera-card">
+        <div class="camera-container">
+          <video id="videoElement" autoplay playsinline muted></video>
+          <canvas id="canvas"></canvas>
+          <div class="face-indicator" id="faceIndicator">🔍 Loading Face Detection...</div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button class="btn" id="startCameraBtn" style="background:#28a745;">📷 Camera On</button>
+          <button class="btn" id="stopCameraBtn" style="background:#dc3545;">⏹️ Camera Off</button>
+          <button class="btn" id="stopInterviewBtn" style="background:#6b7280;">🛑 End Interview</button>
+        </div>
+
+        <div class="live-panel">
+          <div class="title">📊 Live Session Info</div>
+          <div>👤 Student: <span id="liveStudentName">—</span></div>
+          <div>📋 Type: <span id="liveType">—</span></div>
+          <div>⚡ Difficulty: <span id="liveDifficulty">—</span></div>
+          <div>🧠 Experience: <span id="liveExperience">—</span> yr</div>
+          <div>✅ Answered: <span id="liveAnswered">0</span> / <span id="liveTotal">0</span></div>
+          <div>🎯 Current Score: <span id="liveScore">—</span></div>
+          <div>🔊 Voice Used: <span id="liveVoice">No</span></div>
+        </div>
+      </div>
+
+      <!-- Questions Side -->
+      <div class="questions-card">
+        <div class="progress-area">
+          <div class="question-counter" id="questionCounter">Question 1 of 5</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <div class="timer" id="timer">01:00</div>
+        <div id="overallTimer" style="text-align:center; font-size:.85rem; color:#6b7280; margin-bottom:8px;"></div>
+
+        <div class="question-box">
+          <div class="question-text" id="questionText"></div>
+          <button class="btn" id="speakQuestionBtn" style="background:#17a2b8; width:100%; margin-top:10px; padding:10px;">
+            🔊 Read Question Aloud
+          </button>
+        </div>
+
+        <textarea class="answer-text" id="answerText" rows="4"
+          placeholder="Type your answer here... or click 🎤 to speak"></textarea>
+
+        <div class="voice-controls">
+          <button class="btn voice-btn" id="startVoiceBtn">🎤 Start Voice</button>
+          <button class="btn" id="stopVoiceBtn" style="background:#dc3545;" disabled>⏹️ Stop</button>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn" id="submitAnswerBtn">✅ Submit Answer</button>
+          <button class="btn" id="skipQuestionBtn" style="background:#f59e0b; color:#111827;">⏭️ Skip</button>
+        </div>
+
+        <div class="status status-info" id="statusMsg">🎥 Click "Camera On" to begin face detection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="result-card" id="resultCard">
+    <div class="result-head">
+      <h2>📊 Interview Complete!</h2>
+    </div>
+    <div class="final-score" id="finalScore"></div>
+
+    <div class="result-metrics" id="resultMetrics"></div>
+
+    <div class="db-save-status saving" id="dbSaveStatus">
+      ⏳ Waiting for your action: Submit / Retake / Quit
+    </div>
+
+    <div id="detailedResults"></div>
+    <button class="btn" id="restartBtn" style="margin-top:14px; width:100%;">🔄 New Interview Setup</button>
+  </div>
+</div>
+
+<!-- Intro Modal -->
+<div class="intro-modal" id="introModal">
+  <div class="intro-content">
+    <div class="intro-avatar">🤖</div>
+    <h2>Hello! I'm InterVU</h2>
+    <p style="margin:16px 0; line-height:1.6;" id="studentNameMsg">Loading student name...</p>
+    <div class="intro-buttons">
+      <button class="btn" id="yesBtn" style="background:#28a745;">✅ Yes, Start</button>
+      <button class="btn" id="noBtn" style="background:#dc3545;">❌ Not Ready</button>
+    </div>
+  </div>
+</div>
+
+<!-- Submit/Retake/Quit Modal -->
+<div class="confirm-modal" id="finalConfirmModal">
+  <div class="confirm-content">
+    <div class="intro-avatar" style="font-size:2.1rem;">🧾</div>
+    <h2>Final Action</h2>
+    <p style="margin-top:10px; color:#4b5563;">
+      Do you want to <b>submit</b> this interview to database, <b>retake</b> interview, or <b>quit</b> to dashboard?
+    </p>
+    <div class="confirm-buttons">
+      <button class="btn" id="finalSubmitBtn" style="background:#16a34a;">✅ Submit</button>
+      <button class="btn" id="finalRetakeBtn" style="background:#f59e0b; color:#111827;">🔁 Retake</button>
+      <button class="btn" id="finalQuitBtn" style="background:#6b7280;">🏠 Quit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating save indicator -->
+<div class="save-indicator" id="saveIndicator">
+  <span id="saveIndicatorText">💾 Saving...</span>
+</div>
+
+<script>
+  // ── Supabase ─────────────────────────────────────────────────────────────
+  const SB_URL = 'https://mfivynrqcibkpiqkgjqt.supabase.co';
+  const SB_KEY = 'sb_publishable_DAk1iF9K-968ldj4BQW3tw_IxTC5eWV';
+  const { createClient } = supabase;
+  const _supabase = createClient(SB_URL, SB_KEY);
+
+  const API_BASE_URL = 'https://gosmi-ai-based-mock-interview-portal.onrender.com';
+  const DASHBOARD_URL = 'dashboard.html'; // change if needed
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let questions = [];
+  let currentIndex = 0;
+  let answers = [];
+  let marks = [];
+  let feedbacks = [];
+  let accuracies = [];
+  let strengthsList = [];
+  let improvementsList = [];
+  let timerInterval = null;
+  let overallTimerInterval = null;
+  let timeLeft = 60;
+  let overallTimeLeft = 0;
+  let recognition = null;
+  let isListening = false;
+  let videoStream = null;
+  let currentMode = 'duration';
+  let model = null;
+  let detectionInterval = null;
+  let currentStudent = null;
+  let voiceUsed = false;
+  let interviewStartTime = null;
+  let currentDbRecordId = null;
+  let interviewFinished = false;
+
+  // typed effect guard
+  let typingController = { active: false, token: 0 };
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  let setupCard, interviewSection, resultCard, introModal, finalConfirmModal;
+  let startBtn, yesBtn, noBtn, startCameraBtn, stopCameraBtn, stopInterviewBtn;
+  let startVoiceBtn, stopVoiceBtn, submitAnswerBtn, skipQuestionBtn, speakQuestionBtn, restartBtn;
+  let questionText, answerText, timerDisplay, overallTimerDisplay, questionCounter, progressFill, statusMsg;
+  let videoElement, canvas, faceIndicator, interviewType, durationGroup, questionsGroup;
+  let finalSubmitBtn, finalRetakeBtn, finalQuitBtn;
+
+  // ── Save indicator helper ─────────────────────────────────────────────────
+  function showSaveIndicator(msg, type = 'saving') {
+    const el = document.getElementById('saveIndicator');
+    const text = document.getElementById('saveIndicatorText');
+    el.className = `save-indicator show ${type}`;
+    text.textContent = msg;
+    if (type !== 'saving') {
+      setTimeout(() => { el.className = 'save-indicator'; }, 2600);
+    }
+  }
+
+  // ── Utility ───────────────────────────────────────────────────────────────
+  function sanitizeHTML(str = '') {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function safeWordsCount(text) {
+    if (!text || typeof text !== 'string') return 0;
+    const t = text.trim();
+    if (!t) return 0;
+    return t.split(/\s+/).length;
+  }
+
+  function getConfigSnapshot() {
+    const typeEl = document.getElementById('interviewType');
+    return {
+      interview_type: typeEl.value,
+      interview_type_label: typeEl.options[typeEl.selectedIndex]?.text || typeEl.value,
+      sub_category: document.getElementById('subCategory').value,
+      difficulty: document.getElementById('difficulty').value,
+      experience_years: Number(document.getElementById('experienceYears').value || 0),
+      target_company: document.getElementById('targetCompany').value.trim(),
+      preferred_language: document.getElementById('preferredLanguage').value,
+      key_skills: document.getElementById('keySkills').value.trim(),
+      prep_notes: document.getElementById('prepNotes').value.trim()
+    };
+  }
+
+  function gradeFromScore(score){
+    if (score >= 85) return 'Excellent';
+    if (score >= 70) return 'Good';
+    if (score >= 50) return 'Average';
+    return 'Needs Improvement';
+  }
+
+  // ── Load student from Supabase ────────────────────────────────────────────
+  async function loadStudentInfo() {
+    const regNo = sessionStorage.getItem('regNo');
+    if (!regNo) { window.location.href = 'login.html'; return; }
+
+    try {
+      const { data, error } = await _supabase
+        .from('student')
+        .select('*')
+        .eq('registration_no', regNo)
+        .single();
+
+      if (!error && data) {
+        currentStudent = data;
+        const msg = document.getElementById('studentNameMsg');
+        if (msg) {
+          msg.innerHTML =
+            `Hello <strong>${sanitizeHTML(data.full_name)}</strong>, I'm InterVU, your AI Interviewer.<br>Are you ready to start the interview?`;
+        }
+      }
+    } catch (err) {
+      console.error('Error loading student:', err);
+    }
+  }
+
+  // ── Update live panel ─────────────────────────────────────────────────────
+  function updateLivePanel() {
+    const answered = answers.filter(a => a && a !== 'No answer' && a !== 'Skipped').length;
+    const totalMarks = marks.reduce((s, m) => s + (Number(m) || 0), 0);
+    const maxMarks = questions.length * 10;
+    const pct = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0;
+
+    document.getElementById('liveStudentName').textContent = currentStudent?.full_name || '—';
+    document.getElementById('liveType').textContent = document.getElementById('interviewType')?.value || '—';
+    document.getElementById('liveDifficulty').textContent = document.getElementById('difficulty')?.value || '—';
+    document.getElementById('liveExperience').textContent = document.getElementById('experienceYears')?.value || '0';
+    document.getElementById('liveAnswered').textContent = answered;
+    document.getElementById('liveTotal').textContent = questions.length;
+    document.getElementById('liveScore').textContent = maxMarks > 0 ? `${pct}%` : '—';
+    document.getElementById('liveVoice').textContent = voiceUsed ? 'Yes ✅' : 'No';
+  }
+
+  // ── Typewriter question effect ────────────────────────────────────────────
+  async function typeQuestionText(text, speed = 22) {
+    typingController.active = true;
+    typingController.token += 1;
+    const token = typingController.token;
+
+    questionText.classList.add('typing-cursor');
+    questionText.textContent = '';
+
+    for (let i = 0; i < text.length; i++) {
+      if (token !== typingController.token) return; // cancelled by next question
+      questionText.textContent += text[i];
+      await new Promise(r => setTimeout(r, speed));
+    }
+    questionText.classList.remove('typing-cursor');
+    typingController.active = false;
+  }
+
+  function cancelTyping() {
+    typingController.token += 1;
+    typingController.active = false;
+    questionText.classList.remove('typing-cursor');
+  }
+
+  // ── CREATE initial "In Progress" record in DB when interview starts ───────
+  async function createInProgressRecord() {
+    if (!currentStudent) return;
+    const cfg = getConfigSnapshot();
+
+    const payload = {
+      student_registration_no: currentStudent.registration_no,
+      student_name: currentStudent.full_name,
+      interview_date: new Date().toISOString().split('T')[0],
+      interview_time: new Date().toTimeString().split(' ')[0],
+      topic: cfg.interview_type_label,
+      interview_type: cfg.interview_type,
+      role: cfg.sub_category,
+      difficulty_level: cfg.difficulty,
+      total_questions: questions.length,
+      questions_answered: 0,
+      score: 0,
+      average_accuracy: 0,
+      highest_accuracy: 0,
+      lowest_accuracy: 0,
+      answers: [],
+      question_list: questions.map((q, i) => ({ q_no: i + 1, question: q })),
+      feedback: 'Interview in progress...',
+      strengths: [],
+      improvements: [],
+      duration_minutes: 0,
+      total_words: 0,
+      used_voice: false,
+      status: 'In Progress',
+
+      // Extra fields for better preparation tracking
+      experience_years: cfg.experience_years,
+      target_company: cfg.target_company,
+      preferred_language: cfg.preferred_language,
+      key_skills: cfg.key_skills,
+      prep_notes: cfg.prep_notes
+    };
+
+    try {
+      const { data, error } = await _supabase
+        .from('interview_history')
+        .insert([payload])
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Error creating in-progress record:', error);
+        showSaveIndicator('⚠️ DB write failed: ' + error.message, 'error');
+      } else {
+        currentDbRecordId = data.id;
+        showSaveIndicator('✅ Session started & saved!', 'success');
+      }
+    } catch (err) {
+      console.error('Exception creating record:', err);
+      showSaveIndicator('⚠️ Could not create session record', 'error');
+    }
+  }
+
+  // ── UPDATE record after each answer ──────────────────────────────────────
+  async function updateRecordAfterAnswer() {
+    if (!currentDbRecordId || !currentStudent) return;
+
+    const answered = answers.filter(a => a && a !== 'No answer' && a !== 'Skipped').length;
+    const totalMarks = marks.reduce((s, m) => s + (Number(m) || 0), 0);
+    const maxMarks = questions.length * 10;
+    const scoreNow = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0;
+    const validAcc = accuracies.filter(a => Number(a) > 0);
+    const avgAcc = validAcc.length ? Math.round(validAcc.reduce((a, b) => a + b, 0) / validAcc.length) : 0;
+    const highAcc = accuracies.length ? Math.max(...accuracies.map(Number)) : 0;
+    const lowAcc = validAcc.length ? Math.min(...validAcc) : 0;
+    const totalWords = answers.reduce((s, a) => s + safeWordsCount(a), 0);
+
+    const answersArr = questions.map((q, i) => ({
+      question_no: i + 1,
+      question: q,
+      answer: answers[i] || '',
+      accuracy: Number(accuracies[i]) || 0,
+      marks: Number(marks[i]) || 0,
+      feedback: feedbacks[i] || ''
+    }));
+
+    const elapsed = interviewStartTime ? Math.ceil((Date.now() - interviewStartTime) / 60000) : 0;
+
+    showSaveIndicator('💾 Saving answer...', 'saving');
+
+    try {
+      const { error } = await _supabase
+        .from('interview_history')
+        .update({
+          questions_answered: answered,
+          score: scoreNow,
+          average_accuracy: avgAcc,
+          highest_accuracy: highAcc,
+          lowest_accuracy: lowAcc,
+          answers: answersArr,
+          strengths: strengthsList.flat().filter(Boolean),
+          improvements: improvementsList.flat().filter(Boolean),
+          total_words: totalWords,
+          duration_minutes: elapsed,
+          used_voice: voiceUsed,
+          feedback: `Answered ${answered}/${questions.length} questions. Score so far: ${scoreNow}%`,
+          status: 'In Progress',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentDbRecordId);
+
+      if (error) {
+        console.error('Update error:', error);
+        showSaveIndicator('⚠️ Save failed!', 'error');
+      } else {
+        showSaveIndicator(`✅ Q${currentIndex + 1} saved!`, 'success');
+      }
+    } catch (err) {
+      console.error('Exception updating record:', err);
+      showSaveIndicator('⚠️ Exception saving!', 'error');
+    }
+  }
+
+  // ── FINALIZE record when interview completes ──────────────────────────────
+  async function finalizeInterviewRecord() {
+    if (!currentStudent) return;
+
+    if (!currentDbRecordId) {
+      await insertFreshCompletedRecord();
+      return;
+    }
+
+    const cfg = getConfigSnapshot();
+    const answered = answers.filter(a => a && a !== 'No answer' && a !== 'Skipped').length;
+    const totalMarks = marks.reduce((s, m) => s + (Number(m) || 0), 0);
+    const maxMarks = questions.length * 10;
+    const finalScore = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0;
+    const validAcc = accuracies.filter(a => Number(a) > 0);
+    const avgAcc = validAcc.length ? Math.round(validAcc.reduce((a, b) => a + b, 0) / validAcc.length) : 0;
+    const highAcc = accuracies.length ? Math.max(...accuracies.map(Number)) : 0;
+    const lowAcc = validAcc.length ? Math.min(...validAcc) : 0;
+    const totalWords = answers.reduce((s, a) => s + safeWordsCount(a), 0);
+    const elapsed = interviewStartTime ? Math.ceil((Date.now() - interviewStartTime) / 60000) : 0;
+    const grade = gradeFromScore(finalScore);
+
+    const answersArr = questions.map((q, i) => ({
+      question_no: i + 1,
+      question: q,
+      answer: answers[i] || 'No answer',
+      accuracy: Number(accuracies[i]) || 0,
+      marks: Number(marks[i]) || 0,
+      feedback: feedbacks[i] || ''
+    }));
+
+    const allStrengths = strengthsList.flat().filter(Boolean);
+    const allImprovements = improvementsList.flat().filter(Boolean);
+
+    const aiAnalysis = {
+      overall_grade: grade,
+      total_marks_obtained: totalMarks,
+      max_marks: maxMarks,
+      percentage: finalScore,
+      questions_skipped: answers.filter(a => a === 'Skipped').length,
+      questions_unanswered: answers.filter(a => a === 'No answer').length,
+      per_question_summary: answersArr.map(a => ({
+        q_no: a.question_no, marks: a.marks, accuracy: a.accuracy
+      })),
+      config: {
+        experience_years: cfg.experience_years,
+        target_company: cfg.target_company,
+        preferred_language: cfg.preferred_language,
+        key_skills: cfg.key_skills,
+        prep_notes: cfg.prep_notes
+      }
+    };
+
+    showSaveIndicator('💾 Finalizing results...', 'saving');
+
+    try {
+      const { error } = await _supabase
+        .from('interview_history')
+        .update({
+          questions_answered: answered,
+          score: finalScore,
+          average_accuracy: avgAcc,
+          highest_accuracy: highAcc,
+          lowest_accuracy: lowAcc,
+          answers: answersArr,
+          question_list: questions.map((q, i) => ({ q_no: i + 1, question: q })),
+          feedback: `Completed ${answered}/${questions.length} questions. Final score: ${finalScore}%. Grade: ${grade}`,
+          strengths: allStrengths,
+          improvements: allImprovements,
+          ai_analysis: aiAnalysis,
+          duration_minutes: elapsed,
+          total_words: totalWords,
+          used_voice: voiceUsed,
+          status: 'Completed',
+          updated_at: new Date().toISOString(),
+
+          experience_years: cfg.experience_years,
+          target_company: cfg.target_company,
+          preferred_language: cfg.preferred_language,
+          key_skills: cfg.key_skills,
+          prep_notes: cfg.prep_notes
+        })
+        .eq('id', currentDbRecordId);
+
+      if (error) {
+        console.error('Finalize error:', error);
+        document.getElementById('dbSaveStatus').className = 'db-save-status error';
+        document.getElementById('dbSaveStatus').innerHTML = '❌ Error saving to database: ' + error.message;
+        showSaveIndicator('❌ Final save failed!', 'error');
+      } else {
+        document.getElementById('dbSaveStatus').className = 'db-save-status success';
+        document.getElementById('dbSaveStatus').innerHTML =
+          `✅ Results saved successfully! (Record ID: #${currentDbRecordId})`;
+        showSaveIndicator('✅ All results saved!', 'success');
+      }
+    } catch (err) {
+      console.error('Exception finalizing:', err);
+      document.getElementById('dbSaveStatus').className = 'db-save-status error';
+      document.getElementById('dbSaveStatus').innerHTML = '❌ Exception: ' + err.message;
+    }
+  }
+
+  // ── Fallback: fresh insert if no in-progress record exists ───────────────
+  async function insertFreshCompletedRecord() {
+    if (!currentStudent) return;
+
+    const cfg = getConfigSnapshot();
+    const answered = answers.filter(a => a && a !== 'No answer' && a !== 'Skipped').length;
+    const totalMarks = marks.reduce((s, m) => s + (Number(m) || 0), 0);
+    const maxMarks = questions.length * 10;
+    const finalScore = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0;
+    const validAcc = accuracies.filter(a => Number(a) > 0);
+    const avgAcc = validAcc.length ? Math.round(validAcc.reduce((a, b) => a + b, 0) / validAcc.length) : 0;
+    const elapsed = interviewStartTime ? Math.ceil((Date.now() - interviewStartTime) / 60000) : 0;
+    const totalWords = answers.reduce((s, a) => s + safeWordsCount(a), 0);
+
+    const answersArr = questions.map((q, i) => ({
+      question_no: i + 1,
+      question: q,
+      answer: answers[i] || 'No answer',
+      accuracy: Number(accuracies[i]) || 0,
+      marks: Number(marks[i]) || 0,
+      feedback: feedbacks[i] || ''
+    }));
+
+    const payload = {
+      student_registration_no: currentStudent.registration_no,
+      student_name: currentStudent.full_name,
+      interview_date: new Date().toISOString().split('T')[0],
+      interview_time: new Date().toTimeString().split(' ')[0],
+      topic: cfg.interview_type_label,
+      interview_type: cfg.interview_type,
+      role: cfg.sub_category,
+      difficulty_level: cfg.difficulty,
+      total_questions: questions.length,
+      questions_answered: answered,
+      score: finalScore,
+      average_accuracy: avgAcc,
+      highest_accuracy: accuracies.length ? Math.max(...accuracies.map(Number)) : 0,
+      lowest_accuracy: validAcc.length ? Math.min(...validAcc) : 0,
+      answers: answersArr,
+      question_list: questions.map((q, i) => ({ q_no: i + 1, question: q })),
+      feedback: `Completed ${answered}/${questions.length} questions. Final score: ${finalScore}%`,
+      strengths: strengthsList.flat().filter(Boolean),
+      improvements: improvementsList.flat().filter(Boolean),
+      duration_minutes: elapsed,
+      total_words: totalWords,
+      used_voice: voiceUsed,
+      status: 'Completed',
+
+      experience_years: cfg.experience_years,
+      target_company: cfg.target_company,
+      preferred_language: cfg.preferred_language,
+      key_skills: cfg.key_skills,
+      prep_notes: cfg.prep_notes
+    };
+
+    try {
+      const { data, error } = await _supabase
+        .from('interview_history')
+        .insert([payload])
+        .select('id')
+        .single();
+
+      if (error) {
+        document.getElementById('dbSaveStatus').className = 'db-save-status error';
+        document.getElementById('dbSaveStatus').innerHTML = '❌ DB Error: ' + error.message;
+      } else {
+        currentDbRecordId = data.id;
+        document.getElementById('dbSaveStatus').className = 'db-save-status success';
+        document.getElementById('dbSaveStatus').innerHTML = `✅ Results saved! (Record ID: #${data.id})`;
+      }
+    } catch (err) {
+      document.getElementById('dbSaveStatus').className = 'db-save-status error';
+      document.getElementById('dbSaveStatus').innerHTML = '❌ Exception: ' + err.message;
+    }
+  }
+
+  // ── DOM ready ─────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadStudentInfo();
+
+    setupCard = document.getElementById('setupCard');
+    interviewSection = document.getElementById('interviewSection');
+    resultCard = document.getElementById('resultCard');
+    introModal = document.getElementById('introModal');
+    finalConfirmModal = document.getElementById('finalConfirmModal');
+
+    startBtn = document.getElementById('startBtn');
+    yesBtn = document.getElementById('yesBtn');
+    noBtn = document.getElementById('noBtn');
+    startCameraBtn = document.getElementById('startCameraBtn');
+    stopCameraBtn = document.getElementById('stopCameraBtn');
+    stopInterviewBtn = document.getElementById('stopInterviewBtn');
+    startVoiceBtn = document.getElementById('startVoiceBtn');
+    stopVoiceBtn = document.getElementById('stopVoiceBtn');
+    submitAnswerBtn = document.getElementById('submitAnswerBtn');
+    skipQuestionBtn = document.getElementById('skipQuestionBtn');
+    speakQuestionBtn = document.getElementById('speakQuestionBtn');
+    restartBtn = document.getElementById('restartBtn');
+    finalSubmitBtn = document.getElementById('finalSubmitBtn');
+    finalRetakeBtn = document.getElementById('finalRetakeBtn');
+    finalQuitBtn = document.getElementById('finalQuitBtn');
+
+    questionText = document.getElementById('questionText');
+    answerText = document.getElementById('answerText');
+    timerDisplay = document.getElementById('timer');
+    overallTimerDisplay = document.getElementById('overallTimer');
+    questionCounter = document.getElementById('questionCounter');
+    progressFill = document.getElementById('progressFill');
+    statusMsg = document.getElementById('statusMsg');
+    videoElement = document.getElementById('videoElement');
+    canvas = document.getElementById('canvas');
+    faceIndicator = document.getElementById('faceIndicator');
+    interviewType = document.getElementById('interviewType');
+    durationGroup = document.getElementById('durationGroup');
+    questionsGroup = document.getElementById('questionsGroup');
+
+    setupEventListeners();
+    initSpeechRecognition();
+    loadFaceModel();
+
+    console.log('🎤 InterVU AI Interview System Ready!');
+  });
+
+  function setupEventListeners() {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        durationGroup.style.display = currentMode === 'duration' ? 'flex' : 'none';
+        questionsGroup.style.display = currentMode === 'questions' ? 'flex' : 'none';
+      });
+    });
+
+    startBtn.addEventListener('click', generateAndStart);
+
+    yesBtn.addEventListener('click', startActualInterview);
+    noBtn.addEventListener('click', () => {
+      introModal.classList.remove('active');
+      setupCard.style.display = 'block';
+      startBtn.disabled = false;
+      startBtn.innerHTML = '🎤 Start Interview';
+    });
+
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+    stopInterviewBtn.addEventListener('click', stopInterview);
+    submitAnswerBtn.addEventListener('click', submitAnswer);
+    skipQuestionBtn.addEventListener('click', skipQuestion);
+    restartBtn.addEventListener('click', () => window.location.reload());
+
+    speakQuestionBtn.addEventListener('click', () => {
+      if (questions[currentIndex]) speakText(questions[currentIndex]);
+    });
+
+    startVoiceBtn.addEventListener('click', startListening);
+    stopVoiceBtn.addEventListener('click', stopListening);
+
+    finalSubmitBtn.addEventListener('click', async () => {
+      finalConfirmModal.classList.remove('active');
+      document.getElementById('dbSaveStatus').className = 'db-save-status saving';
+      document.getElementById('dbSaveStatus').innerHTML = '💾 Saving your results to database...';
+      await finalizeInterviewRecord();
+    });
+
+    finalRetakeBtn.addEventListener('click', () => {
+      finalConfirmModal.classList.remove('active');
+      retakeInterview();
+    });
+
+    finalQuitBtn.addEventListener('click', () => {
+      finalConfirmModal.classList.remove('active');
+      window.location.href = DASHBOARD_URL;
+    });
+
+    if (stopCameraBtn) stopCameraBtn.disabled = true;
+  }
+
+  // ── Face Detection ────────────────────────────────────────────────────────
+  async function loadFaceModel() {
+    try {
+      if (typeof blazeface !== 'undefined') {
+        model = await blazeface.load();
+        if (faceIndicator) {
+          faceIndicator.textContent = '✅ Face Detection Ready';
+          faceIndicator.className = 'face-indicator good';
+        }
+        startFaceDetection();
+      }
+    } catch (err) {
+      console.error('Face model error:', err);
+      if (faceIndicator) {
+        faceIndicator.textContent = '⚠️ Face Detection Unavailable';
+        faceIndicator.className = 'face-indicator warning';
+      }
+    }
+  }
+
+  function startFaceDetection() {
+    if (detectionInterval) clearInterval(detectionInterval);
+    detectionInterval = setInterval(async () => {
+      if (!model || !videoElement || !videoElement.videoWidth || !canvas) return;
+
+      try {
+        const predictions = await model.estimateFaces(videoElement, false);
+        const ctx = canvas.getContext('2d');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (predictions.length === 0) {
+          faceIndicator.textContent = '❌ No Face Detected! Look at camera';
+          faceIndicator.className = 'face-indicator bad';
+        } else if (predictions.length > 1) {
+          faceIndicator.textContent = `⚠️ ${predictions.length} Faces! Only you should be visible`;
+          faceIndicator.className = 'face-indicator warning';
+        } else {
+          const p = predictions[0];
+          const x = p.topLeft[0], y = p.topLeft[1];
+          const w = p.bottomRight[0] - p.topLeft[0];
+          const h = p.bottomRight[1] - p.topLeft[1];
+
+          const offset = Math.abs((x + w / 2) - canvas.width / 2);
+          const good = offset <= canvas.width * 0.2;
+
+          faceIndicator.textContent = good ? '✅ Face Detected - Good Position' : '⚠️ Center your face';
+          faceIndicator.className = good ? 'face-indicator good' : 'face-indicator warning';
+
+          ctx.strokeStyle = good ? '#22c55e' : '#f59e0b';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x, y, w, h);
+        }
+      } catch (_) { }
+    }, 500);
+  }
+
+  // ── Camera ────────────────────────────────────────────────────────────────
+  async function startCamera() {
+    try {
+      if (videoStream) stopCamera();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      videoStream = stream;
+      videoElement.srcObject = stream;
+      videoElement.muted = true;
+      videoElement.onloadedmetadata = () => {
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+      };
+      if (statusMsg) {
+        statusMsg.className = 'status status-success';
+        statusMsg.innerHTML = '✅ Camera activated! Face detection running.';
+      }
+      startCameraBtn.disabled = true;
+      stopCameraBtn.disabled = false;
+      if (model) startFaceDetection();
+    } catch (err) {
+      if (statusMsg) {
+        statusMsg.className = 'status status-error';
+        statusMsg.innerHTML = '❌ Cannot access camera. Please allow camera permission.';
+      }
+    }
+  }
+
+  function stopCamera() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(t => t.stop());
+      videoStream = null;
+      videoElement.srcObject = null;
+    }
+    startCameraBtn.disabled = false;
+    stopCameraBtn.disabled = true;
+    if (detectionInterval) clearInterval(detectionInterval);
+  }
+
+  // ── Speech ────────────────────────────────────────────────────────────────
+  function initSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return false;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isListening = true;
+      startVoiceBtn.disabled = true;
+      stopVoiceBtn.disabled = false;
+      startVoiceBtn.classList.add('listening');
+      if (statusMsg) {
+        statusMsg.className = 'status status-info';
+        statusMsg.innerHTML = '🎤 Listening... Speak your answer.';
+      }
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      startVoiceBtn.disabled = false;
+      stopVoiceBtn.disabled = true;
+      startVoiceBtn.classList.remove('listening');
+    };
+
+    recognition.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      answerText.value += (answerText.value ? ' ' : '') + t;
+      voiceUsed = true;
+      document.getElementById('liveVoice').textContent = 'Yes ✅';
+      if (statusMsg) {
+        statusMsg.className = 'status status-success';
+        statusMsg.innerHTML = '✅ Voice added! Submit when done.';
+      }
+    };
+
+    recognition.onerror = () => {
+      if (statusMsg) {
+        statusMsg.className = 'status status-warning';
+        statusMsg.innerHTML = '⚠️ Voice recognition issue. You can type answer manually.';
+      }
+    };
+
+    return true;
+  }
+
+  function startListening() { if (recognition && !isListening) recognition.start(); }
+  function stopListening() { if (recognition && isListening) recognition.stop(); }
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      u.lang = 'en-IN';
+      window.speechSynthesis.speak(u);
+    }
+  }
+
+  // ── Timers ────────────────────────────────────────────────────────────────
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        submitAnswer();
+        return;
+      }
+      timeLeft--;
+      const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+      timerDisplay.innerHTML = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      if (timeLeft <= 10) timerDisplay.classList.add('warning');
+    }, 1000);
+  }
+
+  function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+
+  function startOverallTimer(minutes) {
+    overallTimeLeft = minutes * 60;
+    if (overallTimerInterval) clearInterval(overallTimerInterval);
+    overallTimerInterval = setInterval(() => {
+      if (overallTimeLeft <= 0) {
+        clearInterval(overallTimerInterval);
+        finishInterview();
+        return;
+      }
+      overallTimeLeft--;
+      const m = Math.floor(overallTimeLeft / 60), s = overallTimeLeft % 60;
+      overallTimerDisplay.innerHTML = `⏱️ Total Left: ${m}m ${s}s`;
+    }, 1000);
+  }
+
+  // ── Interview Flow ────────────────────────────────────────────────────────
+  async function loadQuestion() {
+    if (currentIndex >= questions.length) {
+      finishInterview();
+      return;
+    }
+
+    const q = questions[currentIndex] || '';
+    cancelTyping();
+    answerText.value = answers[currentIndex] || '';
+    questionCounter.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+    progressFill.style.width = `${(currentIndex / questions.length) * 100}%`;
+    timeLeft = 60;
+    timerDisplay.innerHTML = '01:00';
+    timerDisplay.classList.remove('warning');
+    startTimer();
+
+    updateLivePanel();
+
+    // typewriter + auto voice read
+    await typeQuestionText(q, 18);
+    speakText(q);
+
+    if (statusMsg) {
+      statusMsg.className = 'status status-info';
+      statusMsg.innerHTML = '🧠 Read/hear question and answer confidently.';
+    }
+  }
+
+  async function submitAnswer() {
+    if (interviewFinished) return;
+    stopTimer();
+    stopListening();
+
+    const answer = answerText.value.trim();
+
+    if (!answer) {
+      answers[currentIndex] = 'No answer';
+      marks[currentIndex] = 0;
+      feedbacks[currentIndex] = 'No answer provided.';
+      accuracies[currentIndex] = 0;
+      strengthsList[currentIndex] = [];
+      improvementsList[currentIndex] = ['Please provide an answer'];
+    } else {
+      answers[currentIndex] = answer;
+      submitAnswerBtn.disabled = true;
+      if (statusMsg) {
+        statusMsg.className = 'status status-info';
+        statusMsg.innerHTML = '🤖 AI is evaluating your answer...';
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/evaluate_answer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: questions[currentIndex], answer })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          marks[currentIndex] = Number(data.marks) || 0;
+          feedbacks[currentIndex] = data.feedback || 'Evaluated successfully.';
+          accuracies[currentIndex] = Number(data.accuracy) || ((Number(data.marks) || 0) * 10);
+          strengthsList[currentIndex] = Array.isArray(data.strengths) ? data.strengths : ['Good effort'];
+          improvementsList[currentIndex] = Array.isArray(data.improvements) ? data.improvements : ['Keep practicing'];
+          if (statusMsg) {
+            statusMsg.className = 'status status-success';
+            statusMsg.innerHTML = '✅ Answer evaluated! Moving to next...';
+          }
+        } else {
+          marks[currentIndex] = 0;
+          feedbacks[currentIndex] = 'Could not evaluate.';
+          accuracies[currentIndex] = 0;
+          strengthsList[currentIndex] = [];
+          improvementsList[currentIndex] = ['Try again'];
+        }
+      } catch (err) {
+        console.error('Evaluation error:', err);
+        marks[currentIndex] = 0;
+        feedbacks[currentIndex] = 'Backend not reachable.';
+        accuracies[currentIndex] = 0;
+        strengthsList[currentIndex] = [];
+        improvementsList[currentIndex] = ['Ensure backend is running'];
+        if (statusMsg) {
+          statusMsg.className = 'status status-warning';
+          statusMsg.innerHTML = '⚠️ Backend not reachable. Answer saved locally.';
+        }
+      }
+      submitAnswerBtn.disabled = false;
+    }
+
+    updateLivePanel();
+    await updateRecordAfterAnswer();
+
+    currentIndex++;
+    if (currentIndex < questions.length) await loadQuestion();
+    else finishInterview();
+  }
+
+  async function skipQuestion() {
+    if (interviewFinished) return;
+    stopTimer();
+    stopListening();
+
+    answers[currentIndex] = 'Skipped';
+    marks[currentIndex] = 0;
+    feedbacks[currentIndex] = 'Question skipped.';
+    accuracies[currentIndex] = 0;
+    strengthsList[currentIndex] = [];
+    improvementsList[currentIndex] = ['Try not to skip questions'];
+
+    updateLivePanel();
+    await updateRecordAfterAnswer();
+
+    currentIndex++;
+    if (currentIndex < questions.length) await loadQuestion();
+    else finishInterview();
+  }
+
+  function stopInterview() {
+    if (confirm('Are you sure you want to end the interview early?')) finishInterview();
+  }
+
+  function renderResultSummary() {
+    const totalMarks = marks.reduce((s, m) => s + (Number(m) || 0), 0);
+    const maxMarks = questions.length * 10;
+    const pct = maxMarks > 0 ? Number((totalMarks / maxMarks * 100).toFixed(1)) : 0;
+    const avgAcc = accuracies.length
+      ? Math.round(accuracies.reduce((a, b) => a + (Number(b) || 0), 0) / accuracies.length) : 0;
+    const answered = answers.filter(a => a && a !== 'No answer' && a !== 'Skipped').length;
+    const skipped = answers.filter(a => a === 'Skipped').length;
+    const gradeText = pct >= 85 ? '🏆 Excellent' : pct >= 70 ? '🎯 Good Job' : pct >= 50 ? '📚 Good Attempt' : '💪 Keep Practicing';
+
+    document.getElementById('finalScore').innerHTML =
+      `${totalMarks.toFixed(1)} / ${maxMarks}<br>
+       <small>${pct}% — ${gradeText}</small><br>
+       <small>📊 Avg. Accuracy: ${avgAcc}%</small>`;
+
+    document.getElementById('resultMetrics').innerHTML = `
+      <div class="metric"><div class="v">${answered}</div><div class="k">Answered</div></div>
+      <div class="metric"><div class="v">${skipped}</div><div class="k">Skipped</div></div>
+      <div class="metric"><div class="v">${voiceUsed ? 'Yes' : 'No'}</div><div class="k">Voice Used</div></div>
+      <div class="metric"><div class="v">${Math.ceil((Date.now() - interviewStartTime)/60000)}m</div><div class="k">Duration</div></div>
+    `;
+
+    let html = '';
+    for (let i = 0; i < questions.length; i++) {
+      const acc = Number(accuracies[i]) || 0;
+      const accClass = acc >= 70 ? 'accuracy-high' : acc >= 50 ? 'accuracy-medium' : 'accuracy-low';
+      html += `
+        <div class="feedback-item">
+          <strong>Q${i + 1}: ${sanitizeHTML(questions[i])}</strong><br>
+          <strong>Your Answer:</strong> ${sanitizeHTML(answers[i] || '—')}<br>
+          <strong>⭐ Score:</strong> ${Number(marks[i]) || 0}/10
+          <span class="accuracy-badge ${accClass}">🎯 ${acc}% accuracy</span><br>
+          <strong>💬 Feedback:</strong> ${sanitizeHTML(feedbacks[i] || '—')}<br>
+          <strong>💪 Strengths:</strong> ${sanitizeHTML((strengthsList[i] || []).join(', ') || 'Good effort')}<br>
+          <strong>📈 To Improve:</strong> ${sanitizeHTML((improvementsList[i] || []).join(', ') || 'Keep practicing')}
+        </div>`;
+    }
+    document.getElementById('detailedResults').innerHTML = html;
+
+    document.getElementById('dbSaveStatus').className = 'db-save-status saving';
+    document.getElementById('dbSaveStatus').innerHTML = '⏳ Waiting for your action: Submit / Retake / Quit';
+  }
+
+  async function finishInterview() {
+    if (interviewFinished) return;
+    interviewFinished = true;
+
+    stopTimer();
+    if (overallTimerInterval) clearInterval(overallTimerInterval);
+    stopListening();
+    stopCamera();
+    cancelTyping();
+
+    interviewSection.style.display = 'none';
+    resultCard.style.display = 'block';
+
+    renderResultSummary();
+
+    // Show final action popup BEFORE DB final save
+    setTimeout(() => {
+      finalConfirmModal.classList.add('active');
+    }, 300);
+  }
+
+  // Retake directly from interview page
+  function retakeInterview() {
+    // reset runtime data only (keep setup fields same)
+    currentIndex = 0;
+    answers = new Array(questions.length).fill('');
+    marks = new Array(questions.length).fill(0);
+    feedbacks = new Array(questions.length).fill('');
+    accuracies = new Array(questions.length).fill(0);
+    strengthsList = new Array(questions.length).fill(null).map(() => []);
+    improvementsList = new Array(questions.length).fill(null).map(() => []);
+    voiceUsed = false;
+    interviewFinished = false;
+    interviewStartTime = Date.now();
+    currentDbRecordId = null;
+
+    resultCard.style.display = 'none';
+    interviewSection.style.display = 'block';
+
+    // recreate fresh DB in-progress row
+    createInProgressRecord();
+
+    startCamera();
+    const dur = window.pendingDuration || 30;
+    startOverallTimer(dur);
+    loadQuestion();
+    speakText("Let's retake the interview. Best of luck!");
+  }
+
+  // ── Generate questions & show intro modal ────────────────────────────────
+  async function generateAndStart() {
+    const cfg = getConfigSnapshot();
+    let count = 5;
+
+    if (currentMode === 'questions') {
+      count = parseInt(document.getElementById('questionCount').value || '5', 10);
+    } else {
+      const dur = parseInt(document.getElementById('duration').value || '30', 10);
+      count = Math.max(3, Math.min(12, Math.floor(dur / 5)));
+    }
+
+    startBtn.disabled = true;
+    startBtn.innerHTML = '⏳ Generating Questions...';
+    if (statusMsg) {
+      statusMsg.className = 'status status-info';
+      statusMsg.innerHTML = '🤖 AI is generating personalized questions...';
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/generate_questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          interview_type: cfg.interview_type,
+          sub_category: cfg.sub_category,
+          difficulty: cfg.difficulty,
+          count,
+          experience_years: cfg.experience_years,
+          target_company: cfg.target_company,
+          preferred_language: cfg.preferred_language,
+          key_skills: cfg.key_skills,
+          prep_notes: cfg.prep_notes
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success && Array.isArray(data.questions) && data.questions.length) {
+        questions = data.questions;
+        answers = new Array(questions.length).fill('');
+        marks = new Array(questions.length).fill(0);
+        feedbacks = new Array(questions.length).fill('');
+        accuracies = new Array(questions.length).fill(0);
+        strengthsList = new Array(questions.length).fill(null).map(() => []);
+        improvementsList = new Array(questions.length).fill(null).map(() => []);
+        currentIndex = 0;
+        voiceUsed = false;
+        interviewFinished = false;
+
+        setupCard.style.display = 'none';
+        introModal.classList.add('active');
+
+        const name = currentStudent?.full_name || sessionStorage.getItem('studentName') || 'Candidate';
+        document.getElementById('studentNameMsg').innerHTML =
+          `Hello <strong>${sanitizeHTML(name)}</strong>, I'm InterVU, your AI Interviewer.<br>Are you ready to start?`;
+        speakText(`Hello ${name}, myself InterVU, your AI interviewer. Are you ready?`);
+
+        window.pendingDuration = currentMode === 'duration'
+          ? parseInt(document.getElementById('duration').value || '30', 10)
+          : Math.max(15, Math.ceil(count * 1.5));
+      } else {
+        alert('Failed to generate questions: ' + (data.error || 'Unknown error'));
+        startBtn.disabled = false;
+        startBtn.innerHTML = '🎤 Start Interview';
+      }
+    } catch (err) {
+      alert('❌ Cannot connect to backend.\nMake sure Python server is running on port 5000.');
+      startBtn.disabled = false;
+      startBtn.innerHTML = '🎤 Start Interview';
+    }
+  }
+
+  async function startActualInterview() {
+    introModal.classList.remove('active');
+    interviewSection.style.display = 'block';
+    interviewStartTime = Date.now();
+    interviewFinished = false;
+
+    // create in-progress record
+    await createInProgressRecord();
+
+    await startCamera();
+    startOverallTimer(window.pendingDuration || 30);
+    await loadQuestion();
+    loadFaceModel();
+
+    speakText("Let's begin the interview. Good luck!");
+  }
+</script>
+</body>
+</html>

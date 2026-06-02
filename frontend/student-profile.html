@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>My Profile | VU AI Interview System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fc 0%, #eef2f8 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #003366 0%, #001a3d 100%);
+            backdrop-filter: blur(10px);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ffcc00, #ffaa00);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-icon i {
+            font-size: 1.8rem;
+            color: #003366;
+        }
+
+        .logo-text h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text p {
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 6px 20px 6px 12px;
+            border-radius: 60px;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ffcc00, #ffaa00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #003366;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .user-details h4 {
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            color: #ffdd99;
+            font-size: 0.7rem;
+        }
+
+        .logout-btn {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .logout-btn:hover {
+            background: #ff4444;
+            border-color: #ff4444;
+        }
+
+        /* Main Container */
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .profile-image-section {
+            text-align: center;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #003366, #1a4d8c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .profile-image i {
+            font-size: 4rem;
+            color: #ffcc00;
+        }
+
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-btn {
+            background: #003366;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            background: #1a4d8c;
+        }
+
+        .profile-info h2 {
+            color: #003366;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .profile-info p {
+            color: #6c86a3;
+            margin-bottom: 5px;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            background: #e3f7ec;
+            color: #1e7b48;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-top: 10px;
+        }
+
+        /* Form Sections */
+        .form-section {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #003366;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #eef2f8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px 16px;
+            border: 2px solid #e8edf4;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+            background: #fafcff;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #003366;
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+        .form-group input:disabled, .form-group select:disabled {
+            background: #f5f7fc;
+            color: #6c86a3;
+        }
+
+        .edit-mode .form-group input:disabled {
+            background: #f5f7fc;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #eef2f8;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #003366, #1a4d8c);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background: #eef2f8;
+            color: #2c3e50;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #e3f7ec;
+            color: #1e7b48;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .alert-error {
+            background: #fee9e6;
+            color: #c23d22;
+            border-left: 4px solid #ff6b4a;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60vh;
+            font-size: 1.1rem;
+            color: #003366;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+            }
+            .profile-container {
+                padding: 20px;
+            }
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="logo-area" onclick="window.location.href='dashboard.html'">
+            <div class="logo-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="logo-text">
+                <h1>Vidyasagar University</h1>
+                <p>AI-Powered Interview System</p>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="profile.html" class="nav-link active"><i class="fas fa-user-circle"></i> My Profile</a>
+        </div>
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userAvatar">👤</div>
+            <div class="user-details">
+                <h4 id="studentName">Loading...</h4>
+                <p id="studentReg">Registration: ---</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="profile-container" id="profileContent">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-pulse"></i>
+            <span>Loading your profile...</span>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SB_URL = 'https://mfivynrqcibkpiqkgjqt.supabase.co';
+        const SB_KEY = 'sb_publishable_DAk1iF9K-968ldj4BQW3tw_IxTC5eWV';
+        const { createClient } = supabase;
+        const _supabase = createClient(SB_URL, SB_KEY);
+
+        // Check login status
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        let currentStudent = null;
+        let isEditMode = false;
+
+        async function loadStudentProfile() {
+            const regNo = sessionStorage.getItem('regNo');
+            
+            if (!regNo) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .eq('registration_no', regNo)
+                    .single();
+
+                if (error || !data) {
+                    throw new Error('Student data not found');
+                }
+
+                currentStudent = data;
+                
+                // Update navbar
+                document.getElementById('studentName').textContent = data.full_name;
+                document.getElementById('studentReg').textContent = `Reg: ${data.registration_no}`;
+                
+                // Load profile image if exists
+                if (data.profile_image_url) {
+                    document.getElementById('userAvatar').style.backgroundImage = `url(${data.profile_image_url})`;
+                    document.getElementById('userAvatar').style.backgroundSize = 'cover';
+                    document.getElementById('userAvatar').innerHTML = '';
+                } else {
+                    document.getElementById('userAvatar').innerHTML = (data.full_name || 'S').charAt(0).toUpperCase();
+                    document.getElementById('userAvatar').style.backgroundImage = '';
+                }
+                
+                renderProfileForm(data);
+                
+            } catch (err) {
+                console.error('Error loading profile:', err);
+                document.getElementById('profileContent').innerHTML = `
+                    <div class="alert alert-error" style="display: flex;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Failed to load profile: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderProfileForm(student) {
+            const profileHTML = `
+                <div class="profile-header">
+                    <div class="profile-image-section">
+                        <div class="profile-image" id="profileImage">
+                            ${student.profile_image_url ? 
+                                `<img src="${student.profile_image_url}" alt="Profile">` : 
+                                `<i class="fas fa-user-graduate"></i>`
+                            }
+                        </div>
+                        <button class="upload-btn" onclick="uploadProfileImage()">
+                            <i class="fas fa-camera"></i> Upload Photo
+                        </button>
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="profile-info">
+                        <h2>${student.full_name}</h2>
+                        <p><i class="fas fa-id-card"></i> ${student.registration_no}</p>
+                        <p><i class="fas fa-envelope"></i> ${student.email || 'Not provided'}</p>
+                        <span class="profile-badge"><i class="fas fa-graduation-cap"></i> ${student.department || 'Computer Science'}</span>
+                    </div>
+                </div>
+
+                <div id="alertMessage" class="alert"></div>
+
+                <form id="profileForm" onsubmit="saveProfile(event)">
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user"></i>
+                            Personal Information
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Full Name</label>
+                                <input type="text" id="fullName" value="${student.full_name || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> Email Address</label>
+                                <input type="email" id="email" value="${student.email || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-phone"></i> Phone Number</label>
+                                <input type="tel" id="phone" value="${student.phone || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-calendar-alt"></i> Date of Birth</label>
+                                <input type="date" id="dob" value="${student.date_of_birth || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-university"></i>
+                            Academic Information
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-book"></i> Department</label>
+                                <select id="department" ${!isEditMode ? 'disabled' : ''}>
+                                    <option value="Computer Science" ${student.department === 'Computer Science' ? 'selected' : ''}>Computer Science</option>
+                                    <option value="Information Technology" ${student.department === 'Information Technology' ? 'selected' : ''}>Information Technology</option>
+                                    <option value="Electronics" ${student.department === 'Electronics' ? 'selected' : ''}>Electronics</option>
+                                    <option value="Mechanical" ${student.department === 'Mechanical' ? 'selected' : ''}>Mechanical</option>
+                                    <option value="Civil" ${student.department === 'Civil' ? 'selected' : ''}>Civil</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-chalkboard"></i> Current Semester</label>
+                                <select id="semester" ${!isEditMode ? 'disabled' : ''}>
+                                    ${[1,2,3,4,5,6,7,8].map(s => `<option value="${s}th" ${student.semester === `${s}th` ? 'selected' : ''}>${s}th Semester</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-calendar"></i> Batch Year</label>
+                                <input type="number" id="batchYear" value="${student.batch_year || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-id-badge"></i> Course</label>
+                                <input type="text" id="course" value="${student.course || 'B.Tech'}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-chart-line"></i>
+                            Performance Metrics
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-code"></i> Technical Skills (%)</label>
+                                <input type="number" id="technicalScore" value="${student.technical_score || 0}" min="0" max="100" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-comments"></i> Communication Skills (%)</label>
+                                <input type="number" id="communicationScore" value="${student.communication_score || 0}" min="0" max="100" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-brain"></i> Problem Solving (%)</label>
+                                <input type="number" id="problemSolvingScore" value="${student.problem_solving_score || 0}" min="0" max="100" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-star"></i> Confidence Level (%)</label>
+                                <input type="number" id="confidenceScore" value="${student.confidence_score || 0}" min="0" max="100" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-calendar-check"></i> Attendance (%)</label>
+                                <input type="number" id="attendance" value="${student.attendance_percentage || 0}" min="0" max="100" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Address Information
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-home"></i> Address</label>
+                                <textarea id="address" rows="2" ${!isEditMode ? 'disabled' : ''}>${student.address || ''}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-city"></i> City</label>
+                                <input type="text" id="city" value="${student.city || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-map-marker"></i> State</label>
+                                <input type="text" id="state" value="${student.state || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-mail-bulk"></i> PIN Code</label>
+                                <input type="text" id="pincode" value="${student.pincode || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-phone-alt"></i>
+                            Emergency Contact
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Guardian Name</label>
+                                <input type="text" id="guardianName" value="${student.guardian_name || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-phone"></i> Guardian Phone</label>
+                                <input type="tel" id="guardianPhone" value="${student.guardian_phone || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-handshake"></i> Relation</label>
+                                <input type="text" id="guardianRelation" value="${student.guardian_relation || ''}" ${!isEditMode ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        ${!isEditMode ? 
+                            `<button type="button" class="btn-primary" onclick="enableEditMode()">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </button>` :
+                            `<button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="cancelEdit()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>`
+                        }
+                    </div>
+                </form>
+            `;
+            
+            document.getElementById('profileContent').innerHTML = profileHTML;
+        }
+
+        function enableEditMode() {
+            isEditMode = true;
+            renderProfileForm(currentStudent);
+        }
+
+        function cancelEdit() {
+            isEditMode = false;
+            renderProfileForm(currentStudent);
+        }
+
+        async function saveProfile(event) {
+            event.preventDefault();
+            
+            const regNo = sessionStorage.getItem('regNo');
+            const updatedData = {
+                full_name: document.getElementById('fullName')?.value,
+                email: document.getElementById('email')?.value,
+                phone: document.getElementById('phone')?.value,
+                date_of_birth: document.getElementById('dob')?.value,
+                department: document.getElementById('department')?.value,
+                semester: document.getElementById('semester')?.value,
+                batch_year: parseInt(document.getElementById('batchYear')?.value) || null,
+                course: document.getElementById('course')?.value,
+                technical_score: parseInt(document.getElementById('technicalScore')?.value) || 0,
+                communication_score: parseInt(document.getElementById('communicationScore')?.value) || 0,
+                problem_solving_score: parseInt(document.getElementById('problemSolvingScore')?.value) || 0,
+                confidence_score: parseInt(document.getElementById('confidenceScore')?.value) || 0,
+                attendance_percentage: parseFloat(document.getElementById('attendance')?.value) || 0,
+                address: document.getElementById('address')?.value,
+                city: document.getElementById('city')?.value,
+                state: document.getElementById('state')?.value,
+                pincode: document.getElementById('pincode')?.value,
+                guardian_name: document.getElementById('guardianName')?.value,
+                guardian_phone: document.getElementById('guardianPhone')?.value,
+                guardian_relation: document.getElementById('guardianRelation')?.value,
+                updated_at: new Date().toISOString()
+            };
+
+            // Remove undefined values
+            Object.keys(updatedData).forEach(key => {
+                if (updatedData[key] === undefined || updatedData[key] === '') {
+                    delete updatedData[key];
+                }
+            });
+
+            try {
+                const { error } = await _supabase
+                    .from('students')
+                    .update(updatedData)
+                    .eq('registration_no', regNo);
+
+                if (error) throw error;
+
+                showAlert('Profile updated successfully!', 'success');
+                
+                // Update session storage
+                sessionStorage.setItem('studentName', updatedData.full_name || currentStudent.full_name);
+                
+                // Refresh data
+                currentStudent = { ...currentStudent, ...updatedData };
+                isEditMode = false;
+                renderProfileForm(currentStudent);
+                
+                // Update navbar
+                document.getElementById('studentName').textContent = updatedData.full_name || currentStudent.full_name;
+                
+            } catch (err) {
+                showAlert('Failed to update profile: ' + err.message, 'error');
+            }
+        }
+
+        async function uploadProfileImage() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const regNo = sessionStorage.getItem('regNo');
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${regNo}_${Date.now()}.${fileExt}`;
+                const filePath = `profile_images/${fileName}`;
+                
+                showAlert('Uploading image...', 'success');
+                
+                try {
+                    // Upload to Supabase Storage
+                    const { error: uploadError } = await _supabase.storage
+                        .from('student-profiles')
+                        .upload(filePath, file);
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    // Get public URL
+                    const { data: urlData } = _supabase.storage
+                        .from('student-profiles')
+                        .getPublicUrl(filePath);
+                    
+                    const profileImageUrl = urlData.publicUrl;
+                    
+                    // Update student record with image URL
+                    const { error: updateError } = await _supabase
+                        .from('students')
+                        .update({ profile_image_url: profileImageUrl })
+                        .eq('registration_no', regNo);
+                    
+                    if (updateError) throw updateError;
+                    
+                    // Update current student data
+                    currentStudent.profile_image_url = profileImageUrl;
+                    
+                    // Update UI
+                    const profileImageDiv = document.getElementById('profileImage');
+                    if (profileImageDiv) {
+                        profileImageDiv.innerHTML = `<img src="${profileImageUrl}" alt="Profile">`;
+                    }
+                    
+                    // Update navbar avatar
+                    const userAvatar = document.getElementById('userAvatar');
+                    userAvatar.style.backgroundImage = `url(${profileImageUrl})`;
+                    userAvatar.style.backgroundSize = 'cover';
+                    userAvatar.innerHTML = '';
+                    
+                    showAlert('Profile picture updated successfully!', 'success');
+                    
+                } catch (err) {
+                    showAlert('Failed to upload image: ' + err.message, 'error');
+                }
+            };
+            
+            fileInput.click();
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            if (alertDiv) {
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> ${message}`;
+                alertDiv.style.display = 'flex';
+                
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Initialize profile page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudentProfile();
+        });
+    </script>
+</body>
+</html>

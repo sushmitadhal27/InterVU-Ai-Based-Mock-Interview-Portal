@@ -1,0 +1,935 @@
+Here is the complete, modern HTML/CSS document for the AI Interview System with a sleek, contemporary design while preserving all backend functionality.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>NOVA | AI Interview System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, #0a0f1f 0%, #03060e 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #eef5ff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f7df3;
+            border-radius: 10px;
+        }
+
+        /* Glass Header */
+        .user-header {
+            background: rgba(8, 18, 32, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(79, 125, 243, 0.3);
+            padding: 12px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1100;
+        }
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(79, 125, 243, 0.12);
+            padding: 6px 20px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(79, 125, 243, 0.2);
+        }
+        .student-info i {
+            color: #5d9eff;
+            font-size: 1rem;
+        }
+        .student-name {
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #9bbdff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .logout-btn {
+            background: rgba(255, 80, 80, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            color: #ffaeae;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-btn:hover {
+            background: #ff4d4d;
+            color: white;
+            border-color: #ff4d4d;
+            box-shadow: 0 4px 15px rgba(255,77,77,0.3);
+        }
+
+        /* Connection Badge */
+        .connection-status {
+            position: fixed;
+            top: 85px;
+            right: 28px;
+            background: rgba(10, 20, 35, 0.9);
+            backdrop-filter: blur(16px);
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff5e5e;
+            transition: 0.2s;
+            box-shadow: 0 0 6px #ff5e5e;
+        }
+        .connection-dot.connected {
+            background: #2eff8c;
+            box-shadow: 0 0 12px #2eff8c;
+            animation: pulseGlow 1.5s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { opacity: 0.6; transform: scale(1);}
+            100% { opacity: 1; transform: scale(1.15);}
+        }
+
+        /* Start Modal */
+        .start-prompt {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(12, 22, 40, 0.98);
+            backdrop-filter: blur(28px);
+            border-radius: 48px;
+            padding: 44px 52px;
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+            z-index: 2000;
+            display: none;
+            border: 1px solid rgba(79, 125, 243, 0.5);
+            box-shadow: 0 30px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,125,243,0.2);
+            animation: fadeSlideUp 0.4s ease;
+        }
+        .start-prompt.show { display: block; }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translate(-50%, -35%);}
+            to { opacity: 1; transform: translate(-50%, -50%);}
+        }
+        .start-prompt h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #7aa9ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+        }
+        .start-prompt p {
+            color: #b8ceff;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        .start-prompt button {
+            background: linear-gradient(105deg, #3a6eff, #9b4dff);
+            border: none;
+            padding: 14px 40px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(58,110,255,0.4);
+        }
+        .start-prompt button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 28px rgba(58,110,255,0.6);
+        }
+
+        /* Notifications */
+        .notification-area {
+            position: fixed;
+            top: 90px;
+            right: 28px;
+            z-index: 1400;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .notification {
+            background: rgba(18, 30, 50, 0.96);
+            backdrop-filter: blur(14px);
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: slideInRight 0.25s ease;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0;}
+            to { transform: translateX(0); opacity: 1;}
+        }
+
+        /* Main Container */
+        .interview-container {
+            width: 95%;
+            max-width: 1550px;
+            background: rgba(8, 18, 32, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 44px;
+            margin: 16px auto;
+            height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(79, 125, 243, 0.2);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
+        }
+
+        /* Countdown */
+        .countdown-bar {
+            background: linear-gradient(95deg, #050e1a, #101a2c);
+            padding: 12px 32px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.3rem;
+            font-family: 'Monaco', monospace;
+            border-bottom: 1px solid rgba(79,125,243,0.4);
+            letter-spacing: 1px;
+        }
+
+        /* Grid */
+        .interview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 20px;
+            padding: 24px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Cards */
+        .grid-card {
+            background: rgba(12, 22, 40, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .grid-card:hover {
+            border-color: rgba(79, 125, 243, 0.4);
+            transform: translateY(-2px);
+        }
+        .card-header {
+            padding: 18px 24px;
+            background: rgba(0,0,0,0.3);
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid rgba(79,125,243,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-header i {
+            font-size: 1.2rem;
+            color: #5d9eff;
+        }
+        .card-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Avatar */
+        .avatar-section .avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+        .avatar-circle {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(145deg, #1f2d4e, #121b2f);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 22px;
+            border: 2px solid rgba(93,158,255,0.8);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            transition: 0.2s;
+        }
+        .avatar-emoji {
+            font-size: 4.5rem;
+            filter: drop-shadow(0 4px 6px black);
+        }
+        .avatar-circle.speaking {
+            animation: speakingGlow 0.9s infinite;
+            border-color: #5d9eff;
+            box-shadow: 0 0 25px #5d9eff;
+        }
+        .avatar-circle.listening {
+            animation: listeningPulse 1.2s infinite;
+            border-color: #ff8c6b;
+        }
+        @keyframes speakingGlow {
+            0%,100%{ transform: scale(1); box-shadow: 0 0 0 0 #5d9eff;}
+            50%{ transform: scale(1.04); box-shadow: 0 0 0 12px rgba(93,158,255,0.3);}
+        }
+        @keyframes listeningPulse {
+            0%{ opacity: 0.9; transform: scale(1);}
+            50%{ opacity: 1; transform: scale(1.02);}
+        }
+        .avatar-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(125deg, #ffffff, #7aaaff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .avatar-status {
+            background: rgba(0,0,0,0.45);
+            padding: 5px 16px;
+            border-radius: 60px;
+            margin: 12px 0;
+            font-size: 0.8rem;
+        }
+        .speaking-indicator {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .speaking-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #5d9eff;
+            border-radius: 50%;
+            animation: waveBounce 0.9s infinite;
+        }
+        .speaking-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .speaking-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes waveBounce {
+            0%,100%{ transform: translateY(0); opacity:0.5;}
+            50%{ transform: translateY(-8px); opacity:1;}
+        }
+
+        /* Video */
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            background: #03060e;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(79,125,243,0.4);
+        }
+        #studentVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .video-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #9bbdff;
+            background: rgba(0,0,0,0.6);
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        .recording-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #ff3366dd;
+            backdrop-filter: blur(8px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Chat Modern */
+        .chat-messages {
+            background: rgba(0,0,0,0.25);
+            border-radius: 24px;
+            padding: 16px;
+            height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 10px 18px;
+            border-radius: 26px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            animation: fadeMsg 0.2s;
+        }
+        .message.ai {
+            background: linear-gradient(115deg, #2b3f6e, #1f2d52);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            color: white;
+        }
+        .message.user {
+            background: #2c3e66cc;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+            color: #eef3ff;
+        }
+        .question-box {
+            background: linear-gradient(115deg, #0e1a2c, #081020);
+            border-radius: 24px;
+            padding: 14px 18px;
+            margin: 12px 0;
+            border-left: 4px solid #5d9eff;
+        }
+        .question-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .question-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .timer-container {
+            background: #0a0f1ccc;
+            border-radius: 60px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 12px 0;
+        }
+        .timer-display {
+            font-weight: 800;
+            font-size: 1.2rem;
+            font-family: monospace;
+            min-width: 55px;
+        }
+        .timer-progress {
+            flex: 1;
+            height: 6px;
+            background: #1f2b44;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .timer-progress-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #5d9eff, #a36eff);
+            transition: width 0.2s linear;
+        }
+        .timer-display.warning {
+            color: #ff8866;
+            animation: pulseWarning 1s infinite;
+        }
+        @keyframes pulseWarning {
+            0%,100%{ text-shadow: 0 0 2px #ff8866;}
+            50%{ text-shadow: 0 0 8px #ff5555;}
+        }
+        .input-area {
+            display: flex;
+            gap: 12px;
+            margin: 12px 0 8px;
+        }
+        #userInput {
+            flex: 1;
+            background: #0f172fe6;
+            border: 1px solid #2d4070;
+            border-radius: 60px;
+            padding: 12px 22px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        #userInput:focus {
+            border-color: #5d9eff;
+            box-shadow: 0 0 0 2px rgba(93,158,255,0.2);
+        }
+        #sendBtn {
+            background: linear-gradient(105deg, #3a6eff, #9b4dff);
+            border: none;
+            padding: 0 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .word-counter {
+            font-size: 0.7rem;
+            text-align: right;
+            color: #9bbdff;
+        }
+
+        /* Control Bar */
+        .control-bar {
+            background: rgba(5, 12, 22, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(79,125,243,0.3);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 60px;
+            background: rgba(30, 45, 85, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .control-btn:hover {
+            transform: translateY(-3px);
+            background: #3a6eff;
+            box-shadow: 0 8px 18px rgba(58,110,255,0.4);
+        }
+        .control-btn.record {
+            background: #dc2f5a;
+            box-shadow: 0 0 12px rgba(220,47,90,0.5);
+        }
+        .control-btn.end {
+            background: #4a4f72;
+        }
+        .control-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+        }
+        .status-bar {
+            display: none;
+        }
+
+        @media (max-width: 1000px) {
+            .interview-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                overflow-y: auto;
+            }
+            .interview-container {
+                height: auto;
+                max-height: 96vh;
+            }
+            .control-btn {
+                width: 52px;
+                height: 52px;
+                font-size: 1.3rem;
+            }
+        }
+        @media (max-width: 550px) {
+            .control-btn {
+                width: 48px;
+                height: 48px;
+            }
+            .start-prompt { padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <div class="user-header">
+        <div class="student-info">
+            <i class="fas fa-user-astronaut"></i>
+            <span>Candidate</span>
+            <span id="displayStudentName" class="student-name">Loading...</span>
+        </div>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Exit</button>
+    </div>
+
+    <div class="connection-status" id="connectionStatus">
+        <span class="connection-dot" id="connectionDot"></span>
+        <span id="connectionText">Connecting to Nova AI...</span>
+    </div>
+
+    <div class="start-prompt" id="startPrompt">
+        <h2><i class="fas fa-sparkles"></i> AI Interview</h2>
+        <p>Sophia will guide you through a professional assessment. Ensure microphone access and find a quiet space.</p>
+        <button id="startInterviewBtn"><i class="fas fa-play"></i> Start Session</button>
+    </div>
+
+    <div class="notification-area" id="notificationArea"></div>
+
+    <div class="interview-container">
+        <div class="countdown-bar" id="countdownTimer">⏱️ 15:00</div>
+
+        <div class="interview-grid">
+            <div class="grid-card avatar-section">
+                <div class="card-header"><i class="fas fa-brain"></i> AI INTERVIEWER</div>
+                <div class="card-content avatar-container">
+                    <div class="avatar-circle" id="avatarCircle">
+                        <span class="avatar-emoji">🌟</span>
+                    </div>
+                    <div class="avatar-name">Sophia</div>
+                    <div class="avatar-status">
+                        <span class="status-dot"></span>
+                        <span id="aiStatus">Idle</span>
+                    </div>
+                    <div class="speaking-indicator" id="speakingIndicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-card video-section">
+                <div class="card-header"><i class="fas fa-camera-retro"></i> VIDEO FEED</div>
+                <div class="card-content" style="padding: 0;">
+                    <div class="video-container">
+                        <video id="studentVideo" autoplay muted playsinline></video>
+                        <div class="video-placeholder" id="videoPlaceholder">📷 Camera Off</div>
+                        <div class="recording-indicator" id="recordingIndicator">🔴 REC</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-card chat-section">
+                <div class="card-header"><i class="fas fa-message"></i> INTERACTION</div>
+                <div class="card-content">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message system">✨ Ready for interview</div>
+                    </div>
+                    
+                    <div class="question-box">
+                        <div class="question-label"><i class="fas fa-question"></i> Current Prompt</div>
+                        <div class="question-text" id="currentQuestion">Waiting to begin...</div>
+                    </div>
+                    
+                    <div class="timer-container">
+                        <i class="fas fa-hourglass-half"></i>
+                        <div class="timer-label">Response Window</div>
+                        <div class="timer-display" id="questionTimer">60s</div>
+                        <div class="timer-progress">
+                            <div class="timer-progress-fill" id="timerProgress"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <input type="text" id="userInput" placeholder="Type your answer or use voice..." disabled>
+                        <button id="sendBtn" disabled><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                    
+                    <div class="word-counter">
+                        <i class="fas fa-keyboard"></i> <span id="wordCount">0</span> words
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-bar">
+            <button class="control-btn" id="recordBtn" disabled><i class="fas fa-microphone-alt"></i></button>
+            <button class="control-btn" id="micBtn" disabled><i class="fas fa-microphone"></i></button>
+            <button class="control-btn" id="videoBtn"><i class="fas fa-video"></i></button>
+            <button class="control-btn end" id="endBtn" disabled><i class="fas fa-power-off"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // ========== COMPLETE BACKEND LOGIC (PRESERVED) ==========
+        // All core functionality unchanged: WebSocket, speech, timers, camera, interview flow.
+        let ws = null;
+        let sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let isRecording = false;
+        let isMicOn = true;
+        let isVideoOn = true;
+        let isInterviewActive = false;
+        let currentStreamingMessage = null;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        let voices = [];
+        let sophiaVoice = null;
+        let countdown = 900;
+        let mediaStream = null;
+        let isConnected = false;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 3;
+        let manualStop = false;
+        let usingFallback = false;
+        let questionTimer = null;
+        let questionTimeLeft = 60;
+        let currentQuestionTimerActive = false;
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const wordCountSpan = document.getElementById('wordCount');
+        const currentQuestionDiv = document.getElementById('currentQuestion');
+        const avatarCircle = document.getElementById('avatarCircle'); 
+        const aiStatusSpan = document.getElementById('aiStatus');
+        const speakingIndicatorDiv = document.getElementById('speakingIndicator');
+        const recordingIndicatorSpan = document.getElementById('recordingIndicator');
+        const countdownTimerSpan = document.getElementById('countdownTimer');
+        const videoPlaceholderDiv = document.getElementById('videoPlaceholder');
+        const studentVideo = document.getElementById('studentVideo');
+        const recordBtn = document.getElementById('recordBtn');
+        const micBtn = document.getElementById('micBtn');
+        const videoBtn = document.getElementById('videoBtn');
+        const endBtn = document.getElementById('endBtn');
+        const startPromptDiv = document.getElementById('startPrompt');
+        const startInterviewBtn = document.getElementById('startInterviewBtn');
+        const connectionDotSpan = document.getElementById('connectionDot');
+        const connectionTextSpan = document.getElementById('connectionText');
+        const notificationAreaDiv = document.getElementById('notificationArea');
+        const questionTimerDisplay = document.getElementById('questionTimer');
+        const timerProgressFill = document.getElementById('timerProgress');
+
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            let icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            notification.innerHTML = `<span>${icon} ${message}</span><span style="margin-left: auto; cursor: pointer;" onclick="this.parentElement.remove()">✕</span>`;
+            notificationAreaDiv.appendChild(notification);
+            setTimeout(() => notification.remove(), duration);
+        }
+
+        function startQuestionTimer(duration = 60) {
+            if (questionTimer) clearInterval(questionTimer);
+            questionTimeLeft = duration;
+            currentQuestionTimerActive = true;
+            updateTimerDisplay();
+            questionTimer = setInterval(() => {
+                if (!isInterviewActive || !currentQuestionTimerActive) return;
+                questionTimeLeft--;
+                updateTimerDisplay();
+                if (questionTimeLeft <= 0) {
+                    clearInterval(questionTimer);
+                    currentQuestionTimerActive = false;
+                    showNotification('⏱️ Time\'s up! Moving to next question.', 'warning');
+                    addMessage('system', '⏱️ Time\'s up! Moving to next question.');
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'answer', text: '[No answer given]', wordCount: 0 }));
+                    }
+                    if (currentStreamingMessage) { currentStreamingMessage.remove(); currentStreamingMessage = null; }
+                    userInput.value = '';
+                    if (isRecording) { isRecording = false; recordBtn.classList.remove('record'); if(recognition) try{ recognition.stop(); }catch(e){} }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            if (!questionTimerDisplay) return;
+            questionTimerDisplay.textContent = `${questionTimeLeft}s`;
+            const percentage = (questionTimeLeft / 60) * 100;
+            timerProgressFill.style.width = `${percentage}%`;
+            if (questionTimeLeft <= 10) {
+                questionTimerDisplay.classList.add('warning');
+                timerProgressFill.classList.add('warning');
+            } else {
+                questionTimerDisplay.classList.remove('warning');
+                timerProgressFill.classList.remove('warning');
+            }
+        }
+
+        function stopQuestionTimer() { if(questionTimer){ clearInterval(questionTimer); questionTimer=null; } currentQuestionTimerActive=false; }
+        function resetQuestionTimer() { stopQuestionTimer(); questionTimeLeft=60; if(questionTimerDisplay) questionTimerDisplay.textContent='60s'; timerProgressFill.style.width='100%'; }
+
+        function loadVoices() { voices = synthesis.getVoices(); sophiaVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK') || v.name.includes('Samantha')); }
+        if(synthesis) { loadVoices(); if(synthesis.onvoiceschanged) synthesis.onvoiceschanged = loadVoices; }
+
+        function speakText(text, isQuestion = false) {
+            if(!synthesis) return;
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if(sophiaVoice) utterance.voice = sophiaVoice;
+            utterance.pitch = 1.0; utterance.rate = 0.9;
+            utterance.onstart = () => updateAvatarStatus('speaking');
+            utterance.onend = () => {
+                updateAvatarStatus('listening');
+                if(isQuestion && isInterviewActive && !usingFallback) setTimeout(() => { if(!isRecording) recordBtn.click(); }, 500);
+            };
+            synthesis.speak(utterance);
+        }
+
+        function initSpeechRecognition() {
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SpeechRecognitionAPI) { setupFallbackMode(); return false; }
+            recognition = new SpeechRecognitionAPI();
+            recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'en-US';
+            recognition.onstart = () => { showNotification('🎤 Listening... speak now', 'info', 2000); updateAvatarStatus('listening'); };
+            recognition.onresult = (event) => {
+                if(!isInterviewActive) return;
+                let finalTranscript = '';
+                for(let i=event.resultIndex; i<event.results.length; i++) {
+                    if(event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                }
+                if(finalTranscript) {
+                    if(currentStreamingMessage) { currentStreamingMessage.remove(); currentStreamingMessage=null; }
+                    addMessage('user', finalTranscript);
+                    const wc = finalTranscript.split(' ').length;
+                    wordCountSpan.textContent = wc;
+                    if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type:'answer', text:finalTranscript, wordCount:wc }));
+                    stopQuestionTimer();
+                    if(isRecording){ isRecording=false; recordBtn.classList.remove('record'); try{recognition.stop();}catch(e){} }
+                }
+            };
+            recognition.onerror = (e) => { if(e.error !== 'no-speech') { showNotification(`Speech error: ${e.error}`, 'error'); setupFallbackMode(); } updateAvatarStatus('idle'); isRecording=false; recordBtn.classList.remove('record'); };
+            recognition.onend = () => { if(isRecording && isInterviewActive && !manualStop) try{ recognition.start(); }catch(e){} else updateAvatarStatus('idle'); };
+            return true;
+        }
+
+        function setupFallbackMode() { usingFallback=true; showNotification('✏️ Text mode active. Please type answers.', 'info'); userInput.disabled=false; sendBtn.disabled=false; recordBtn.disabled=true; }
+
+        async function initCamera() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                studentVideo.srcObject = mediaStream;
+                videoPlaceholderDiv.style.display = 'none';
+                recordingIndicatorSpan.style.display = 'flex';
+                isVideoOn=true; videoBtn.style.background='rgba(102, 126, 234, 0.9)';
+            } catch(err) { videoPlaceholderDiv.style.display='block'; recordingIndicatorSpan.style.display='none'; isVideoOn=false; videoBtn.style.background='#6c757d'; }
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://localhost:8000/ws/${sessionId}`);
+            ws.onopen = () => { isConnected=true; connectionDotSpan.classList.add('connected'); connectionTextSpan.textContent='Connected to Nova'; reconnectAttempts=0; showNotification('✅ Connected to AI', 'success'); setTimeout(()=>startPromptDiv.classList.add('show'),800); };
+            ws.onmessage = (event) => { const data=JSON.parse(event.data); handleInterviewMessage(data); };
+            ws.onerror = () => { connectionTextSpan.textContent='Connection error'; if(reconnectAttempts<maxReconnectAttempts){ reconnectAttempts++; setTimeout(connectWebSocket,3000); } };
+            ws.onclose = () => { isConnected=false; connectionDotSpan.classList.remove('connected'); connectionTextSpan.textContent='Disconnected'; disableControls(); };
+        }
+
+        function handleInterviewMessage(data) {
+            switch(data.type){
+                case 'welcome': streamAIMessage(data.message,'ai'); speakText(data.message,false); isInterviewActive=true; enableControls(); showNotification('🎤 Interview started!','success'); break;
+                case 'question': currentQuestionDiv.textContent = `"${data.question}"`; streamAIMessage(`Question ${data.question_number}: ${data.question}`,'ai'); speakText(data.question,true); resetQuestionTimer(); startQuestionTimer(60); break;
+                case 'feedback': streamAIMessage(data.feedback,'ai'); speakText(data.feedback,false); stopQuestionTimer(); break;
+                case 'completed': streamAIMessage(`🎉 ${data.message}`,'ai'); speakText(data.message,false); if(data.summary) streamAIMessage(`Summary: ${data.summary.total_questions} answered`,'ai'); isInterviewActive=false; stopQuestionTimer(); if(recognition) try{recognition.stop();}catch(e){} recordBtn.classList.remove('record'); disableControls(); showNotification('✅ Interview completed!','success'); break;
+                case 'error': showNotification(`❌ ${data.message}`,'error'); break;
+                default: break;
+            }
+        }
+
+        function streamAIMessage(text,sender){
+            const msgDiv=document.createElement('div'); msgDiv.className=`message ${sender}`;
+            const senderSpan=document.createElement('div'); senderSpan.className='sender'; senderSpan.textContent=sender==='ai'?'Sophia':'System';
+            const contentSpan=document.createElement('div'); contentSpan.className='content'; contentSpan.textContent=text;
+            const timeSpan=document.createElement('div'); timeSpan.className='time'; timeSpan.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+            msgDiv.appendChild(senderSpan); msgDiv.appendChild(contentSpan); msgDiv.appendChild(timeSpan);
+            chatMessages.appendChild(msgDiv); chatMessages.scrollTop=chatMessages.scrollHeight;
+        }
+
+        function addMessage(sender,text){
+            const msgDiv=document.createElement('div'); msgDiv.className=`message ${sender}`;
+            const senderSpan=document.createElement('div'); senderSpan.className='sender'; senderSpan.textContent=sender==='ai'?'Sophia':sender==='user'?'You':'System';
+            const contentSpan=document.createElement('div'); contentSpan.className='content'; contentSpan.textContent=text;
+            const timeSpan=document.createElement('div'); timeSpan.className='time'; timeSpan.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+            msgDiv.appendChild(senderSpan); msgDiv.appendChild(contentSpan); msgDiv.appendChild(timeSpan);
+            chatMessages.appendChild(msgDiv); chatMessages.scrollTop=chatMessages.scrollHeight;
+        }
+
+        function updateAvatarStatus(status){
+            avatarCircle.classList.remove('speaking','listening');
+            if(status==='speaking'){ avatarCircle.classList.add('speaking'); aiStatusSpan.textContent='Speaking...'; speakingIndicatorDiv.style.display='flex'; }
+            else if(status==='listening'){ avatarCircle.classList.add('listening'); aiStatusSpan.textContent='Listening...'; speakingIndicatorDiv.style.display='none'; }
+            else{ aiStatusSpan.textContent='Ready'; speakingIndicatorDiv.style.display='none'; }
+        }
+
+        function updateCountdown(){ if(countdown>0 && isInterviewActive){ countdown--; const m=Math.floor(countdown/60), s=countdown%60; countdownTimerSpan.textContent=`⏱️ ${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; } }
+        function enableControls(){ if(!usingFallback){ userInput.disabled=false; sendBtn.disabled=false; recordBtn.disabled=false; } else{ userInput.disabled=false; sendBtn.disabled=false; } micBtn.disabled=false; endBtn.disabled=false; }
+        function disableControls(){ userInput.disabled=true; sendBtn.disabled=true; recordBtn.disabled=true; micBtn.disabled=true; endBtn.disabled=true; }
+
+        async function testServerConnection(){ try{ const res=await fetch('http://localhost:8000/test'); return res.ok; }catch(e){ return false; } }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initSpeechRecognition();
+            const serverOk = await testServerConnection();
+            if(!serverOk) showNotification('⚠️ Server unreachable. Start backend on port 8000', 'error');
+            await initCamera();
+            connectWebSocket();
+            setInterval(updateCountdown,1000);
+            startInterviewBtn.onclick = () => { if(ws && ws.readyState===WebSocket.OPEN){ ws.send(JSON.stringify({type:'start_interview'})); startPromptDiv.classList.remove('show'); } else alert('Not connected to server'); };
+            recordBtn.onclick = () => { if(!isInterviewActive) return showNotification('Start interview first','warning'); if(usingFallback){ userInput.focus(); return; } manualStop=false; isRecording=!isRecording; if(isRecording){ recordBtn.classList.add('record'); if(recognition) recognition.start(); } else{ recordBtn.classList.remove('record'); if(recognition){ manualStop=true; recognition.stop(); } } };
+            micBtn.onclick = () => { if(!isInterviewActive) return; isMicOn=!isMicOn; micBtn.style.background=isMicOn?'rgba(102,126,234,0.9)':'#dc3545'; showNotification(isMicOn?'🎤 Mic on':'🎤 Mic off','info'); };
+            videoBtn.onclick = () => { isVideoOn=!isVideoOn; videoBtn.style.background=isVideoOn?'rgba(102,126,234,0.9)':'#6c757d'; if(mediaStream) mediaStream.getVideoTracks().forEach(t=>t.enabled=isVideoOn); videoPlaceholderDiv.style.display=isVideoOn?'none':'block'; recordingIndicatorSpan.style.display=isVideoOn?'flex':'none'; };
+            sendBtn.onclick = () => { if(!isInterviewActive){ showNotification('Start interview first','warning'); return; } const txt=userInput.value.trim(); if(txt){ addMessage('user',txt); wordCountSpan.textContent=txt.split(' ').length; if(ws && ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({type:'answer',text:txt,wordCount:txt.split(' ').length})); userInput.value=''; stopQuestionTimer(); } };
+            userInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter') sendBtn.click(); });
+            endBtn.onclick = () => { if(confirm('End interview?')){ isRecording=false; isInterviewActive=false; stopQuestionTimer(); if(recognition) try{recognition.stop();}catch(e){} if(synthesis) synthesis.cancel(); if(ws && ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({type:'end_interview'})); disableControls(); showNotification('Interview ended','info'); } };
+        });
+        window.addEventListener('beforeunload',()=>{ if(ws) ws.close(); if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop()); if(synthesis) synthesis.cancel(); if(questionTimer) clearInterval(questionTimer); });
+        function logout() { sessionStorage.removeItem('isLoggedIn'); window.location.href = 'login.html'; }
+        window.updateWordCount = (t) => { const w=t.trim().split(/\s+/).filter(w=>w.length).length; wordCountSpan.textContent=w; };
+    </script>
+</body>
+</html>
+```
